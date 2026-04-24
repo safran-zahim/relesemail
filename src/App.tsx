@@ -65,10 +65,13 @@ const DEFAULT_CATEGORIES: FeatureCategory[] = [
       { id: g(), text: 'Improvements to the Job State Change View' },
     ],
   },
-].map((cat, i) => ({
-  ...cat,
-  iconName: Object.keys(featureIcons).length > 0 ? Object.keys(featureIcons)[i % Object.keys(featureIcons).length] : undefined
-}));
+].map((cat, i) => {
+  const DEFAULT_ICON_NAMES = ['icon_05', 'icon_04', 'icon_01', 'icon_02', 'icon_03', 'icon_06'];
+  return {
+    ...cat,
+    iconName: DEFAULT_ICON_NAMES[i % DEFAULT_ICON_NAMES.length]
+  };
+});
 
 const DEFAULT_BUTTONS: CTAButton[] = [
   { id: g(), label: 'Demo Video', url: '' },
@@ -83,6 +86,7 @@ const INITIAL: FormData = {
   version: '8.1',
   tagline: 'Is Out As a Stable Version',
   brandColor: '#f97316',
+  logoUrl: '/orangehrm-logo.png',
   heroImageUrl: '',
   heroTitle: 'NEW FEATURE HIGHLIGHTS',
   heroSubtitle: 'Experience the new features in action. Click the button below to watch quick walkthrough videos.',
@@ -191,7 +195,7 @@ export default function App() {
     set('demoButtons', form.demoButtons.map(b => b.id === id ? { ...b, ...patch } : b));
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50">
+    <div className="min-h-screen bg-[#F0F1F5]">
       {/* Header */}
       <header className="sticky top-0 z-20 bg-white/80 backdrop-blur-md border-b border-indigo-100 shadow-sm">
         <div className="max-w-screen-2xl mx-auto px-6 h-16 flex items-center gap-3">
@@ -205,17 +209,17 @@ export default function App() {
           <div className="flex items-center gap-1 bg-indigo-50 border border-indigo-100 rounded-xl p-1 ml-2">
             {([['release', '📢 Release'], ['welcome', '🎉 Welcome']] as const).map(([t, label]) => (
               <button key={t} onClick={() => setTemplate(t)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all ${
                   template === t
                     ? 'bg-white shadow text-indigo-700 border border-indigo-200'
                     : 'text-gray-500 hover:text-gray-700'
                 }`}>{label}</button>
             ))}
           </div>
-          <div className="ml-auto flex items-center gap-2">
+          <div className="ml-auto flex items-center gap-3">
             <button
               onClick={handleCopy}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all border shadow-sm ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all border shadow-sm ${
                 copied
                   ? 'bg-emerald-50 border-emerald-300 text-emerald-700'
                   : 'bg-indigo-50 border-indigo-300 text-indigo-700 hover:bg-indigo-100'
@@ -226,7 +230,7 @@ export default function App() {
             </button>
             <button
               onClick={handleDownload}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-md hover:from-indigo-600 hover:to-purple-700 transition-all"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-md hover:from-indigo-600 hover:to-purple-700 transition-all"
             >
               <Download size={14} />
               Download
@@ -241,7 +245,7 @@ export default function App() {
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`flex-1 py-3 text-sm font-semibold capitalize transition ${
+            className={`flex-1 py-2.5 text-xs font-semibold capitalize transition ${
               activeTab === tab
                 ? 'text-indigo-600 border-b-2 border-indigo-500 bg-indigo-50'
                 : 'text-gray-500 hover:text-gray-700'
@@ -263,7 +267,7 @@ export default function App() {
             {template === 'release' && <>
             {/* Branding */}
             <Section title="Branding & Identity" icon="🎨" color="violet">
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-3 mb-3">
                 <Field label="Company Name">
                   <Input value={form.companyName} onChange={v => set('companyName', v)} placeholder="OrangeHRM" />
                 </Field>
@@ -284,6 +288,9 @@ export default function App() {
                     <Input value={form.brandColor} onChange={v => set('brandColor', v)} placeholder="#f97316" />
                   </div>
                 </Field>
+              </div>
+              <div className="mb-3">
+                <ImageField label="Company Logo" value={form.logoUrl} onChange={v => set('logoUrl', v)} hint="optional" />
               </div>
               <Field label="Tagline">
                 <Input value={form.tagline} onChange={v => set('tagline', v)} placeholder="Is Out As a Stable Version" />
@@ -330,7 +337,7 @@ export default function App() {
               </div>
               <button
                 onClick={addCategory}
-                className="flex items-center gap-2 px-3 py-2 text-sm font-semibold text-amber-700 bg-amber-100 hover:bg-amber-200 rounded-xl transition w-full justify-center"
+                className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold text-amber-700 bg-amber-100 hover:bg-amber-200 rounded-xl transition w-full justify-center"
               >
                 <Plus size={14} /> Add Category
               </button>

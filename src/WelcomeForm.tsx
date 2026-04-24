@@ -17,7 +17,7 @@ const DEFAULT_QA: QAItem[] = [
 
 export const WELCOME_INITIAL: WelcomeFormData = {
   companyName: '',
-  logoUrl: '',
+  logoUrl: '/orangehrm-logo.png',
   accentColor: '#F35C17',
   headline: "You're Part of The Family Now",
   employeeName: '',

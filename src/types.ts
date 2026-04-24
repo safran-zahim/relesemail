@@ -25,6 +25,7 @@ export interface FormData {
   version: string;
   tagline: string;
   brandColor: string;
+  logoUrl: string;
   heroImageUrl: string;
   // Hero
   heroTitle: string;

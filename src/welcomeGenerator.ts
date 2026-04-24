@@ -4,7 +4,7 @@ export function generateWelcomeEmailHTML(d: WelcomeFormData): string {
   const accent = d.accentColor || '#F35C17';
 
   const logoImg = d.logoUrl
-    ? `<img src="${d.logoUrl}" alt="Company Logo" style="width:70px;height:70px;margin:0 auto 20px auto;display:block;">`
+    ? `<img src="${d.logoUrl}" width="70" height="70" alt="Company Logo" style="width:70px;height:70px;margin:0 auto 20px auto;display:block;border:0;">`
     : `<div style="width:70px;height:70px;margin:0 auto 20px auto;border-radius:16px;background:${accent};display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:900;color:#fff;text-align:center;line-height:70px;">${(d.companyName || 'C')[0]}</div>`;
 
   const photoImg = d.employeePhotoUrl
