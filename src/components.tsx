@@ -36,11 +36,10 @@ export function Field({ label, hint, children }: { label: string; hint?: string;
 }
 
 export function Section({
-  title, icon, children, color = 'indigo', defaultOpen = true, onActive
+  title, icon, children, color = 'indigo', defaultOpen = true
 }: {
   title: string; icon: string; children: React.ReactNode;
   color?: string; defaultOpen?: boolean;
-  onActive?: () => void;
 }) {
   const [open, setOpen] = useState(defaultOpen);
   const colorMap: Record<string, string> = {
@@ -56,10 +55,7 @@ export function Section({
   return (
     <div className="rounded-2xl border border-gray-200 overflow-hidden shadow-sm bg-white">
       <button
-        onClick={() => {
-          setOpen(o => !o);
-          onActive?.();
-        }}
+        onClick={() => setOpen(o => !o)}
         className={`w-full flex items-center justify-between px-4 py-3.5 border-b text-left transition hover:brightness-95 ${headerCls}`}
       >
         <span className="flex items-center gap-2 font-semibold text-sm">
@@ -85,22 +81,22 @@ export function ListEditor({
   const genId = () => Math.random().toString(36).slice(2);
   const add = () => onChange([...items, { id: genId(), text: '', iconName: withIcons && iconOptions?.length ? iconOptions[items.length % iconOptions.length] : undefined }]);
   const remove = (id: string) => onChange(items.filter(i => i.id !== id));
-  const update = (id: string, patch: Partial<{text: string; iconName: string}>) => onChange(items.map(i => i.id === id ? { ...i, ...patch } : i));
+  const update = (id: string, patch: Partial<{ text: string; iconName: string }>) => onChange(items.map(i => i.id === id ? { ...i, ...patch } : i));
   return (
     <div className="space-y-2">
       {items.map((item, idx) => (
         <div key={item.id} className="flex items-center gap-2">
           {withIcons && iconOptions ? (
-             <select value={item.iconName || ''} onChange={e => update(item.id, { iconName: e.target.value })} className="w-24 px-1 py-2 bg-white border border-indigo-100 rounded-xl text-center text-xs focus:outline-none focus:border-indigo-400">
-               <option value="">None</option>
-               {iconOptions.map(ic => <option key={ic} value={ic}>{ic}</option>)}
-             </select>
+            <select value={item.iconName || ''} onChange={e => update(item.id, { iconName: e.target.value })} className="w-24 px-1 py-2 bg-white border border-indigo-100 rounded-xl text-center text-xs focus:outline-none focus:border-indigo-400">
+              <option value="">None</option>
+              {iconOptions.map(ic => <option key={ic} value={ic}>{ic}</option>)}
+            </select>
           ) : (
             <span className="text-gray-400 text-xs w-5 shrink-0">{idx + 1}.</span>
           )}
           <input
             value={item.text}
-            onChange={e => update(item.id, {text: e.target.value})}
+            onChange={e => update(item.id, { text: e.target.value })}
             placeholder={placeholder}
             className="flex-1 px-3 py-2 bg-white border border-indigo-100 rounded-xl text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition"
           />
@@ -213,7 +209,7 @@ export function ImageField({
             src={value}
             alt="uploaded"
             className="w-full object-cover max-h-40"
-            onError={e => { (e.target as HTMLImageElement).style.display='none'; }}
+            onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
           />
           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
             <button

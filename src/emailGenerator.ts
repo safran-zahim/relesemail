@@ -112,8 +112,8 @@ export function generateEmailHTML(data: FormData): string {
     ? `<tr><td style="padding:16px 40px;"><table width="100%" cellpadding="0" cellspacing="0"><tr><td style="border:2px solid #ffffff;border-radius:50px;text-align:center;background:rgba(255,255,255,0.06);"><a href="${data.highlightVideoUrl}" style="display:block;padding:10px 16px;color:#ffffff;font-size:14px;font-weight:600;text-decoration:none;font-family:'Inter',sans-serif;">&#127916; Watch the Video</a></td></tr></table></td></tr>`
     : '';
 
-  const renderFixedImageRow = (src: string, alt: string, id?: string): string =>
-    `<tr ${id ? `id="${id}"` : ''}><td align="center" width="100%" style="line-height:0;padding:0;width:100%;max-width:${mailWidth}px;"><img src="${src}" alt="${alt}" width="100%" style="display:block;width:100%;max-width:${mailWidth}px;height:auto;border:0;outline:none;text-decoration:none;margin:0;padding:0;-ms-interpolation-mode:bicubic;"></td></tr>`;
+  const renderFixedImageRow = (src: string, alt: string): string =>
+    `<tr><td align="center" width="100%" style="line-height:0;padding:0;width:100%;max-width:${mailWidth}px;"><img src="${src}" alt="${alt}" width="100%" style="display:block;width:100%;max-width:${mailWidth}px;height:auto;border:0;outline:none;text-decoration:none;margin:0;padding:0;-ms-interpolation-mode:bicubic;"></td></tr>`;
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -122,30 +122,6 @@ export function generateEmailHTML(data: FormData): string {
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${product} ${version} Release</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-<script>
-  window.addEventListener('scroll', () => {
-    const sections = ['section-branding', 'section-hero', 'section-features', 'section-highlights', 'section-enhancements', 'section-hosted', 'section-demo', 'section-footer'];
-    let current = '';
-    let minDistance = 9999;
-    
-    sections.forEach(id => {
-      const el = document.getElementById(id);
-      if (el) {
-        const rect = el.getBoundingClientRect();
-        // Check if the section is near the top of the viewport
-        const distance = Math.abs(rect.top - 100); 
-        if (rect.top < 250 && distance < minDistance) {
-          minDistance = distance;
-          current = id;
-        }
-      }
-    });
-
-    if (current) {
-      window.parent.postMessage({ type: 'PREVIEW_SCROLL', sectionId: current }, '*');
-    }
-  });
-</script>
 </head>
 <body style="margin:0;padding:0;background-color:#F0F1F5;" bgcolor="#F0F1F5">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="#F0F1F5" style="background-color:#F0F1F5;padding:40px 0;">
@@ -153,7 +129,7 @@ export function generateEmailHTML(data: FormData): string {
 <table width="100%" cellpadding="0" cellspacing="0" align="center" bgcolor="#050a1f" style="background-color:#050a1f;width:100%;max-width:${mailWidth}px;margin:0 auto;font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;">
 
   <!-- Top Branding Area -->
-  <tr><td id="section-branding" style="text-align:center;padding:40px 40px 0px;">
+  <tr><td style="text-align:center;padding:40px 40px 0px;">
     <!-- Logo centered -->
     <div style="margin-bottom:0px;">
       ${logoElement}
@@ -168,10 +144,10 @@ export function generateEmailHTML(data: FormData): string {
   </td></tr>
 
   <!-- Hero Image Area -->
-  ${data.heroImageUrl ? renderFixedImageRow(data.heroImageUrl, 'Hero', 'section-hero') : ''}
+  ${data.heroImageUrl ? renderFixedImageRow(data.heroImageUrl, 'Hero') : ''}
 
 
-  <tr><td id="section-features" style="${innerBg}text-align:center;padding:8px 40px 16px;">
+  <tr><td style="${innerBg}text-align:center;padding:8px 40px 16px;">
     <p style="margin:0;font-size:11px;font-weight:700;color:${brand};letter-spacing:4px;text-transform:uppercase;">WHAT'S NEW</p>
     <h2 style="margin:8px 0 0;font-size:28px;font-weight:800;color:#fff;letter-spacing:-0.02em;font-family:'Inter',sans-serif;">Features</h2>
     <div style="height:2px;background:linear-gradient(90deg,transparent,${brand},transparent);border-radius:2px;margin-top:10px;"></div>
@@ -181,7 +157,7 @@ export function generateEmailHTML(data: FormData): string {
   ${data.featuresImageUrl ? renderFixedImageRow(data.featuresImageUrl, 'Features Section Image') : ''}
 
 
-  <tr><td id="section-highlights" style="${innerBg}text-align:center;padding:32px 40px 16px;">
+  <tr><td style="${innerBg}text-align:center;padding:32px 40px 16px;">
     <p style="margin:0;font-size:11px;font-weight:700;color:${brand};letter-spacing:4px;text-transform:uppercase;">HIGHLIGHTS</p>
     <h2 style="margin:10px 0 8px;font-size:28px;font-weight:800;color:#fff;letter-spacing:-0.02em;font-family:'Inter',sans-serif;">${data.highlightTitle || 'NEW FEATURE HIGHLIGHTS'}</h2>
     <p style="margin:0;color:#cbd5e1;font-size:15px;line-height:1.6;font-weight:400;font-family:'Inter',sans-serif;">${(data.highlightDesc || '').replace(/\n/g, '<br>')}</p>
@@ -190,14 +166,14 @@ export function generateEmailHTML(data: FormData): string {
   ${highlightVideoBtn}
 
   ${enhancementsHTML ? `
-  <tr><td id="section-enhancements" style="${innerBg}padding:28px 40px 8px;text-align:center;">
+  <tr><td style="${innerBg}padding:28px 40px 8px;text-align:center;">
     <p style="margin:0;font-size:11px;font-weight:700;color:${brand};letter-spacing:4px;text-transform:uppercase;">UPDATES</p>
     <h2 style="margin:8px 0 0;font-size:28px;font-weight:800;color:#fff;letter-spacing:-0.02em;font-family:'Inter',sans-serif;">Enhancements</h2>
   </td></tr>
   ${enhancementsHTML}` : ''}
 
   ${data.hostedEnvEnabled ? `
-  <tr><td id="section-hosted" style="${innerBg}text-align:center;padding:36px 40px 20px;">
+  <tr><td style="${innerBg}text-align:center;padding:36px 40px 20px;">
     <p style="margin:0;font-size:11px;font-weight:700;color:${brand};letter-spacing:4px;text-transform:uppercase;">TRY IT NOW</p>
     <h2 style="margin:10px 0 12px;font-size:28px;font-weight:800;color:#fff;letter-spacing:-0.02em;font-family:'Inter',sans-serif;">Hosted Environment</h2>
     <p style="margin:0;color:#cbd5e1;font-size:15px;line-height:1.6;font-weight:400;font-family:'Inter',sans-serif;">${data.hostedEnvDesc || ''}</p>
@@ -215,13 +191,13 @@ export function generateEmailHTML(data: FormData): string {
   </td></tr>` : ''}
 
   ${data.demoTitle || data.demoButtons.some(b => b.label.trim()) || data.demoImageUrl ? `
-  <tr><td id="section-demo" style="${innerBg}text-align:center;padding:32px 40px 12px;">
+  <tr><td style="${innerBg}text-align:center;padding:32px 40px 12px;">
     <h2 style="margin:0;font-size:28px;font-weight:800;color:#fff;letter-spacing:-0.02em;white-space:pre-line;font-family:'Inter',sans-serif;">${data.demoTitle || 'Stakeholder Demo\nVideo & Slide'}</h2>
   </td></tr>
   ${data.demoImageUrl ? renderFixedImageRow(data.demoImageUrl, 'Demo') : ''}
   <tr><td style="${innerBg}padding:8px 0 24px;"><table width="100%" cellpadding="0" cellspacing="0">${demoButtonsHTML}</table></td></tr>` : ''}
 
-  <tr><td id="section-footer" style="background:linear-gradient(135deg,${brand}22,${brand}44);border-top:1px solid rgba(255,255,255,0.1);text-align:center;padding:22px 40px;">
+  <tr><td style="background:linear-gradient(135deg,${brand}22,${brand}44);border-top:1px solid rgba(255,255,255,0.1);text-align:center;padding:22px 40px;">
     <p style="margin:0;color:rgba(255,255,255,0.9);font-size:14px;font-weight:600;">${data.footerText || 'Bring Innovation to Human Resource Management !!!'}</p>
   </td></tr>
 
