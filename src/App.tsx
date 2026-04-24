@@ -274,7 +274,7 @@ export default function App() {
     setSending(true);
     setSendStatus(null);
     try {
-      if (sendPayload.bytes > 4000000) throw new Error('Email too large');
+      if (sendPayload.bytes > 700000) throw new Error('Email too large (Limit 700KB)');
       const response = await fetch('/api/send-test-email', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: sendPayload.payload });
       if (!response.ok) throw new Error('Failed');
       setSendStatus('Sent!');
@@ -306,9 +306,9 @@ export default function App() {
           </div>
           <div className="ml-auto flex items-center gap-3">
             <input type="email" value={testRecipient} onChange={e => setTestRecipient(e.target.value)} placeholder="Test email" className="px-3 py-1.5 rounded-lg border border-indigo-200 text-xs focus:outline-none bg-white" />
-            <div className={`px-2.5 py-1.5 rounded-lg text-[11px] font-semibold border transition-colors ${sendPayload.bytes > 4000000
+            <div className={`px-2.5 py-1.5 rounded-lg text-[11px] font-semibold border transition-colors ${sendPayload.bytes > 700000
               ? 'bg-red-50 border-red-200 text-red-700 animate-pulse'
-              : sendPayload.bytes > 3000000
+              : sendPayload.bytes > 500000
                 ? 'bg-amber-50 border-amber-200 text-amber-700'
                 : 'bg-emerald-50 border-emerald-200 text-emerald-700'
               }`}>
@@ -363,6 +363,16 @@ export default function App() {
                       {form.featureCategories.map((cat) => (
                         <div key={cat.id} className="border border-amber-100 rounded-2xl bg-amber-50/40 p-3 space-y-2">
                           <div className="flex items-center gap-2">
+                            <select 
+                              value={cat.iconName} 
+                              onChange={e => updateCategory(cat.id, { iconName: e.target.value })}
+                              className="px-2 py-2 bg-white border border-amber-200 rounded-xl text-sm focus:outline-none cursor-pointer"
+                            >
+                              {Array.from({ length: 14 }).map((_, i) => {
+                                const name = `icon_${String(i + 1).padStart(2, '0')}`;
+                                return <option key={name} value={name}>Icon {i + 1}</option>;
+                              })}
+                            </select>
                             <input value={cat.name} onChange={e => updateCategory(cat.id, { name: e.target.value })} placeholder="Category name" className="flex-1 px-3 py-2 bg-white border border-amber-200 rounded-xl text-sm focus:outline-none" />
                             <button onClick={() => removeCategory(cat.id)} className="p-1.5 text-gray-400 hover:text-red-500 transition-colors"><Trash2 size={14} /></button>
                           </div>
@@ -434,10 +444,10 @@ export default function App() {
           </div>
 
           <div className={`lg:sticky lg:top-24 ${activeTab === 'form' ? 'hidden lg:block' : ''}`}>
-            {sendPayload.bytes > 4000000 && (
+            {sendPayload.bytes > 700000 && (
               <div className="mb-3 p-3 bg-red-50 text-red-800 rounded-xl text-xs font-bold border border-red-200 flex items-center gap-2 animate-pulse">
                 <Zap size={14} className="text-red-600" />
-                <span>CRITICAL: Size Limit Exceeded (Max 4MB). Email will be clipped!</span>
+                <span>CRITICAL: Size Limit Exceeded (Max 700KB). Email will be clipped!</span>
               </div>
             )}
             {sendStatus && <div className={`mb-3 p-3 rounded-xl text-xs font-semibold border ${sendStatus.includes('Error') ? 'bg-red-50 text-red-800 border-red-200' : 'bg-emerald-50 text-emerald-800 border-emerald-200'}`}>{sendStatus}</div>}
