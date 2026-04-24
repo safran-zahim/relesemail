@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useMemo } from 'react';
 import { Mail, Copy, Check, Download, Zap, Plus, Trash2, Send } from 'lucide-react';
 import { Section, Field, Input, ListEditor, ImageField } from './components';
 import { generateEmailHTML } from './emailGenerator';
@@ -116,6 +116,12 @@ const INITIAL: FormData = {
 
 const ICONS = ['⭐', '📊', '🗓️', '👥', '🔷', '⚡', '🛡️', '📱', '🎯', '🔔', '💼', '🌐'];
 
+function formatBytes(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+}
+
 export default function App() {
   const [template, setTemplate] = useState<TemplateType>('release');
   const [form, setForm] = useState<FormData>(INITIAL);
@@ -142,6 +148,16 @@ export default function App() {
   const emailSubject = template === 'release'
     ? 'Local Test: OrangeHRM 8.1'
     : `Local Test: Welcome ${welcome.employeeName || 'New Member'}`;
+
+  const sendPayload = useMemo(() => {
+    const payload = JSON.stringify({
+      subject: emailSubject,
+      htmlBody: emailHTML,
+      to: testRecipient.trim() || undefined,
+    });
+    const bytes = new TextEncoder().encode(payload).length;
+    return { payload, bytes };
+  }, [emailSubject, emailHTML, testRecipient]);
 
   const handleCopy = async () => {
     try {
@@ -188,16 +204,16 @@ export default function App() {
     setSendStatus(null);
 
     try {
+      if (sendPayload.bytes > 4_000_000) {
+        throw new Error('Email content is too large. Reduce image sizes before sending.');
+      }
+
       const response = await fetch('/api/send-test-email', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          subject: emailSubject,
-          htmlBody: emailHTML,
-          to: testRecipient.trim() || undefined,
-        }),
+        body: sendPayload.payload,
       });
 
       const responseText = await response.text();
@@ -276,6 +292,14 @@ export default function App() {
               placeholder="Send to email (optional)"
               className="w-64 max-w-[38vw] px-3 py-1.5 rounded-lg border border-indigo-200 text-xs text-gray-700 placeholder-gray-400 bg-white focus:outline-none focus:border-indigo-400"
             />
+            <div className={`px-2.5 py-1.5 rounded-lg text-[11px] font-semibold border ${sendPayload.bytes > 4_000_000
+              ? 'bg-red-50 border-red-200 text-red-700'
+              : sendPayload.bytes > 3_000_000
+                ? 'bg-amber-50 border-amber-200 text-amber-700'
+                : 'bg-emerald-50 border-emerald-200 text-emerald-700'
+              }`}>
+              Payload: {formatBytes(sendPayload.bytes)}
+            </div>
             <button
               onClick={handleSendTestMail}
               disabled={sending}

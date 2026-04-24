@@ -121,8 +121,55 @@ export function ImageField({
 
   const readFile = useCallback((file: File) => {
     if (!file.type.startsWith('image/')) return;
+
     const reader = new FileReader();
-    reader.onload = e => { onChange(e.target?.result as string); setExpanded(false); };
+    reader.onload = () => {
+      const src = reader.result as string;
+      const img = new window.Image();
+
+      img.onload = () => {
+        const maxDimension = 1400;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > maxDimension || height > maxDimension) {
+          const scale = Math.min(maxDimension / width, maxDimension / height);
+          width = Math.max(1, Math.round(width * scale));
+          height = Math.max(1, Math.round(height * scale));
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+
+        if (!ctx) {
+          onChange(src);
+          setExpanded(false);
+          return;
+        }
+
+        ctx.drawImage(img, 0, 0, width, height);
+
+        let output = canvas.toDataURL('image/jpeg', 0.82);
+
+        // If still heavy, reduce quality once more.
+        if (output.length > 1_800_000) {
+          output = canvas.toDataURL('image/jpeg', 0.68);
+        }
+
+        onChange(output);
+        setExpanded(false);
+      };
+
+      img.onerror = () => {
+        onChange(src);
+        setExpanded(false);
+      };
+
+      img.src = src;
+    };
+
     reader.readAsDataURL(file);
   }, [onChange]);
 

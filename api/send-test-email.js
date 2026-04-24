@@ -1,4 +1,6 @@
 import { google } from 'googleapis';
+import { readFile } from 'node:fs/promises';
+import path from 'node:path';
 
 export const config = {
   runtime: 'nodejs',
@@ -18,6 +20,70 @@ function base64UrlEncode(value) {
     .replace(/\+/g, '-')
     .replace(/\//g, '_')
     .replace(/=+$/, '');
+}
+
+function chunkBase64(base64, size = 76) {
+  const chunks = [];
+  for (let i = 0; i < base64.length; i += size) {
+    chunks.push(base64.slice(i, i + size));
+  }
+  return chunks.join('\r\n');
+}
+
+async function buildMimeMessage({ from, to, subject, htmlBody }) {
+  const boundary = `boundary_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+  const normalizedHtmlBody = htmlBody.replace(
+    /src=(['"])\/orangehrm-logo\.png\1/gi,
+    'src=$1cid:company-logo$1',
+  );
+  const useInlineLogo = normalizedHtmlBody.includes('cid:company-logo');
+  let logoBase64 = '';
+
+  if (useInlineLogo) {
+    const candidatePaths = [
+      path.join(process.cwd(), 'public', 'orangehrm-logo.png'),
+      path.join(process.cwd(), 'orangehrm-logo.png'),
+    ];
+
+    for (const logoPath of candidatePaths) {
+      try {
+        logoBase64 = await readFile(logoPath, 'base64');
+        break;
+      } catch {
+        // Try next candidate path.
+      }
+    }
+  }
+
+  const parts = [
+    `From: ${from}`,
+    `To: ${to}`,
+    `Subject: ${subject}`,
+    'MIME-Version: 1.0',
+    `Content-Type: multipart/related; boundary="${boundary}"`,
+    '',
+    `--${boundary}`,
+    'Content-Type: text/html; charset="UTF-8"',
+    'Content-Transfer-Encoding: 7bit',
+    '',
+    normalizedHtmlBody,
+  ];
+
+  if (useInlineLogo && logoBase64) {
+    parts.push(
+      '',
+      `--${boundary}`,
+      'Content-Type: image/png; name="company-logo.png"',
+      'Content-Transfer-Encoding: base64',
+      'Content-ID: <company-logo>',
+      'Content-Disposition: inline; filename="company-logo.png"',
+      '',
+      chunkBase64(logoBase64),
+    );
+  }
+
+  parts.push('', `--${boundary}--`);
+  return parts.join('\r\n');
 }
 
 export default async function handler(req, res) {
@@ -53,15 +119,12 @@ export default async function handler(req, res) {
 
     const recipient = typeof to === 'string' && to.trim() ? to.trim() : gmailUser;
 
-    const rawMessage = [
-      `From: ${gmailUser}`,
-      `To: ${recipient}`,
-      `Subject: ${subject}`,
-      'MIME-Version: 1.0',
-      'Content-Type: text/html; charset="UTF-8"',
-      '',
+    const rawMessage = await buildMimeMessage({
+      from: gmailUser,
+      to: recipient,
+      subject,
       htmlBody,
-    ].join('\r\n');
+    });
 
     const gmail = google.gmail({ version: 'v1', auth: oauth2Client });
 
