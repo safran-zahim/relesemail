@@ -111,7 +111,7 @@ export function generateEmailHTML(data: FormData): string {
   const demoImg = data.demoImageUrl ? `<img src="${data.demoImageUrl}" width="800" alt="Demo" style="display:block;width:100%;max-width:800px;height:450px;object-fit:cover;border:0;">` : '';
 
   const highlightVideoBtn = data.highlightVideoUrl
-    ? `<tr><td style="padding:16px 40px;"><table width="100%" cellpadding="0" cellspacing="0"><tr><td style="background:${brand};border-radius:50px;text-align:center;"><a href="${data.highlightVideoUrl}" style="display:block;padding:14px;color:#fff;font-size:14px;font-weight:700;text-decoration:none;">&#127916; Watch the Video</a></td></tr></table></td></tr>`
+    ? `<tr><td style="padding:16px 40px;"><table width="100%" cellpadding="0" cellspacing="0"><tr><td style="border:2px solid #ffffff;border-radius:50px;text-align:center;background:rgba(255,255,255,0.06);"><a href="${data.highlightVideoUrl}" style="display:block;padding:10px 16px;color:#ffffff;font-size:14px;font-weight:600;text-decoration:none;font-family:'Inter',sans-serif;">&#127916; Watch the Video</a></td></tr></table></td></tr>`
     : '';
 
   return `<!DOCTYPE html>
