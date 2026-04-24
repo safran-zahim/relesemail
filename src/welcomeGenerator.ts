@@ -2,7 +2,9 @@ import type { WelcomeFormData } from './types';
 
 export function generateWelcomeEmailHTML(d: WelcomeFormData): string {
   const accent = d.accentColor || '#F35C17';
-  const logoSrc = d.logoUrl && d.logoUrl.trim() ? d.logoUrl : 'cid:company-logo';
+  const logoSrc = d.logoUrl && d.logoUrl.trim() 
+    ? d.logoUrl 
+    : '/orangehrm-logo.png';
 
   const logoImg = logoSrc
     ? `<img src="${logoSrc}" width="70" height="70" alt="Company Logo" style="width:70px;height:70px;margin:0 auto 20px auto;display:block;border:0;">`
