@@ -125,6 +125,14 @@ export function ImageField({
     const reader = new FileReader();
     reader.onload = () => {
       const src = reader.result as string;
+
+      // Skip canvas processing for GIFs to preserve animation
+      if (file.type === 'image/gif') {
+        onChange(src);
+        setExpanded(false);
+        return;
+      }
+
       const img = new window.Image();
 
       img.onload = () => {
