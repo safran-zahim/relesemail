@@ -32,6 +32,7 @@ export interface FormData {
   heroSubtitle: string;
   // Features
   featureCategories: FeatureCategory[];
+  featuresImageUrl: string;
   // New Feature Highlights
   highlightTitle: string;
   highlightDesc: string;

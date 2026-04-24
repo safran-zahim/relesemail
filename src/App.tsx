@@ -91,6 +91,7 @@ const INITIAL: FormData = {
   heroTitle: 'NEW FEATURE HIGHLIGHTS',
   heroSubtitle: 'Experience the new features in action. Click the button below to watch quick walkthrough videos.',
   featureCategories: DEFAULT_CATEGORIES,
+  featuresImageUrl: '',
   highlightTitle: 'NEW FEATURE HIGHLIGHTS',
   highlightDesc: 'Experience the new features in action. Click the button below to watch quick walkthrough videos.\nOrangeHRM Citra: A Smarter Look. A Smoother Experience.',
   highlightImageUrl: '',
@@ -426,10 +427,18 @@ export default function App() {
                 </div>
                 <button
                   onClick={addCategory}
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold text-amber-700 bg-amber-100 hover:bg-amber-200 rounded-xl transition w-full justify-center"
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold text-amber-700 bg-amber-100 hover:bg-amber-200 rounded-xl transition w-full justify-center mb-4"
                 >
                   <Plus size={14} /> Add Category
                 </button>
+                <div className="pt-4 border-t border-amber-100">
+                  <ImageField 
+                    label="Section Image (After Categories)" 
+                    value={form.featuresImageUrl} 
+                    onChange={v => set('featuresImageUrl', v)} 
+                    hint="optional"
+                  />
+                </div>
               </Section>
 
               {/* Feature Highlights */}

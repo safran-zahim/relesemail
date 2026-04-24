@@ -154,6 +154,8 @@ export function generateEmailHTML(data: FormData): string {
   </td></tr>
 
   ${categoriesHTML ? `<tr><td style="${innerBg}padding:4px 0 20px;"><table width="100%" cellpadding="0" cellspacing="0">${categoriesHTML}</table></td></tr>` : ''}
+  ${data.featuresImageUrl ? renderFixedImageRow(data.featuresImageUrl, 'Features Section Image') : ''}
+
 
   <tr><td style="${innerBg}text-align:center;padding:32px 40px 16px;">
     <p style="margin:0;font-size:11px;font-weight:700;color:${brand};letter-spacing:4px;text-transform:uppercase;">HIGHLIGHTS</p>
