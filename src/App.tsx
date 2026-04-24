@@ -139,8 +139,8 @@ export default function App() {
     : `welcome-${welcome.employeeName?.replace(/\s+/g, '-').toLowerCase() || 'new-member'}.html`;
 
   const emailSubject = template === 'release'
-    ? `${form.productName || 'Release'} ${form.version || ''}`.trim()
-    : `Welcome ${welcome.employeeName || 'to the Team'}`;
+    ? 'Local Test: OrangeHRM 8.1'
+    : `Local Test: Welcome ${welcome.employeeName || 'New Member'}`;
 
   const handleCopy = async () => {
     try {
@@ -193,20 +193,35 @@ export default function App() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          subject: `${emailSubject} - Test Mail`,
+          subject: emailSubject,
           htmlBody: emailHTML,
         }),
       });
 
-      const result = await response.json().catch(() => ({}));
+      const responseText = await response.text();
+      let result: { error?: string } = {};
+
+      if (responseText) {
+        try {
+          result = JSON.parse(responseText) as { error?: string };
+        } catch {
+          result = {};
+        }
+      }
 
       if (!response.ok) {
-        throw new Error(result.error || 'Failed to send test mail');
+        const fallbackMessage = responseText || `HTTP ${response.status}`;
+        throw new Error(result.error || fallbackMessage || 'Failed to send test mail');
       }
 
       setSendStatus('Test mail sent to your Gmail inbox.');
     } catch (error) {
-      setSendStatus(error instanceof Error ? error.message : 'Failed to send test mail');
+      const message = error instanceof Error ? error.message : 'Failed to send test mail';
+      if (message.includes('HTTP 404')) {
+        setSendStatus('API route not found. Run the app with Vercel dev or deploy to Vercel so /api/send-test-email exists.');
+      } else {
+        setSendStatus(message);
+      }
     } finally {
       setSending(false);
     }
