@@ -306,18 +306,13 @@ export default function App() {
           </div>
           <div className="ml-auto flex items-center gap-3">
             <input type="email" value={testRecipient} onChange={e => setTestRecipient(e.target.value)} placeholder="Test email" className="px-3 py-1.5 rounded-lg border border-indigo-200 text-xs focus:outline-none bg-white" />
-            <div className="flex flex-col items-end gap-0.5">
-              <div className={`px-2.5 py-1.5 rounded-lg text-[11px] font-semibold border transition-colors ${sendPayload.bytes > 4000000
-                ? 'bg-red-50 border-red-200 text-red-700 animate-pulse'
-                : sendPayload.bytes > 3000000
-                  ? 'bg-amber-50 border-amber-200 text-amber-700'
-                  : 'bg-emerald-50 border-emerald-200 text-emerald-700'
-                }`}>
-                Payload: {formatBytes(sendPayload.bytes)}
-              </div>
-              {sendPayload.bytes > 4000000 && (
-                <span className="text-[9px] font-bold text-red-600 uppercase tracking-wider">Size Limit Exceeded (Max 4MB)</span>
-              )}
+            <div className={`px-2.5 py-1.5 rounded-lg text-[11px] font-semibold border transition-colors ${sendPayload.bytes > 4000000
+              ? 'bg-red-50 border-red-200 text-red-700 animate-pulse'
+              : sendPayload.bytes > 3000000
+                ? 'bg-amber-50 border-amber-200 text-amber-700'
+                : 'bg-emerald-50 border-emerald-200 text-emerald-700'
+              }`}>
+              Payload: {formatBytes(sendPayload.bytes)}
             </div>
             <button onClick={handleSendTestMail} disabled={sending} className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-semibold hover:bg-emerald-700 disabled:opacity-60 transition-all"><Send size={14} /> Send</button>
             <button onClick={handleCopy} className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 text-indigo-700 border border-indigo-200 rounded-lg text-xs font-semibold hover:bg-indigo-100 transition-all">{copied ? <Check size={14} /> : <Copy size={14} />} {copied ? 'Copied' : 'Copy HTML'}</button>
@@ -439,7 +434,13 @@ export default function App() {
           </div>
 
           <div className={`lg:sticky lg:top-24 ${activeTab === 'form' ? 'hidden lg:block' : ''}`}>
-            {sendStatus && <div className="mb-3 p-3 bg-emerald-50 text-emerald-800 rounded-xl text-xs font-semibold border border-emerald-200">{sendStatus}</div>}
+            {sendPayload.bytes > 4000000 && (
+              <div className="mb-3 p-3 bg-red-50 text-red-800 rounded-xl text-xs font-bold border border-red-200 flex items-center gap-2 animate-pulse">
+                <Zap size={14} className="text-red-600" />
+                <span>CRITICAL: Size Limit Exceeded (Max 4MB). Email will be clipped!</span>
+              </div>
+            )}
+            {sendStatus && <div className={`mb-3 p-3 rounded-xl text-xs font-semibold border ${sendStatus.includes('Error') ? 'bg-red-50 text-red-800 border-red-200' : 'bg-emerald-50 text-emerald-800 border-emerald-200'}`}>{sendStatus}</div>}
             <div className="flex items-center gap-2 mb-3"><Mail className="text-indigo-600" size={16} /><span className="font-bold text-gray-800 text-sm">Live Email Preview</span></div>
             <div className="rounded-2xl overflow-hidden border-2 border-indigo-100 shadow-xl bg-white">
               <div className="flex items-center gap-2 px-4 py-2.5 bg-gray-50 border-b border-gray-100">
