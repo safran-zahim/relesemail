@@ -180,7 +180,7 @@ export function generateEmailHTML(data: FormData): string {
   </td></tr>
   ${data.hostedEnvImageUrl ? renderFixedImageRow(data.hostedEnvImageUrl, 'Hosted Env') : ''}
   <tr><td style="${innerBg}padding:20px 40px;">
-    <table width="100%" cellpadding="0" cellspacing="0" style="background:rgba(255,255,255,0.01);border-radius:14px;backdrop-filter:blur(80px);-webkit-backdrop-filter:blur(80px);">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:rgba(13,17,33,0.7);border:1px solid rgba(255,255,255,0.1);border-radius:14px;">
       <tr><td style="padding:18px 20px;">
         ${data.hostedUrl ? `<p style="margin:0 0 12px;text-align:center;font-size:15px;font-family:'Inter',sans-serif;"><span style="color:${brand};">URL: </span><a href="${data.hostedUrl}" style="color:${brand};font-size:15px;text-decoration:none;">${data.hostedUrl}</a></p>` : ''}
         ${data.adminUser ? `<p style="margin:8px 0;text-align:center;font-size:15px;color:#ffffff;font-family:'Inter',sans-serif;">Admin Account: UN: ${data.adminUser} | PW: ${data.adminPass}</p>` : ''}
