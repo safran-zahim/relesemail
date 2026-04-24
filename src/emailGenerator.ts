@@ -51,7 +51,7 @@ export function generateEmailHTML(data: FormData): string {
           <tr><td style="padding:20px 24px;">
             <table width="100%" cellpadding="0" cellspacing="0">
               <tr>
-                <td valign="middle" style="padding-bottom:8px; gap: 5px;">
+                <td valign="middle" style="padding-bottom:8px;">
                   ${getToggleSwitchIcon(cat.iconName)}
                   <span style="color:#ffffff;font-size:24px;font-weight:700; padding-left: 15px;line-height:1;vertical-align:top;letter-spacing:-0.02em;font-family:'Inter',sans-serif;">${cat.name}</span>
                 </td>
