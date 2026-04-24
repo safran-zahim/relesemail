@@ -53,7 +53,7 @@ export function generateEmailHTML(data: FormData): string {
               <tr>
                 <td valign="middle" style="padding-bottom:8px;">
                   ${getToggleSwitchIcon(cat.iconName)}
-                  <span style="color:#ffffff;font-size:24px;font-weight:700; padding-left: 15px;line-height:1;vertical-align:top;letter-spacing:-0.02em;font-family:'Inter',sans-serif;">${cat.name}</span>
+                  <span style="color:#ffffff;font-size:24px;font-weight:700;line-height:1;vertical-align:top;letter-spacing:-0.02em;font-family:'Inter',sans-serif;">${cat.name}</span>
                 </td>
               </tr>
               <tr><td style="padding-left:${(cat.iconName && featureIcons[cat.iconName]) ? '44px' : '0px'};">
@@ -136,10 +136,10 @@ export function generateEmailHTML(data: FormData): string {
     </div>
     <!-- Title and Tagline -->
     <div style="position:relative;z-index:20;">
-      <h1 style="margin:0;font-size:64px;font-weight:800;color:#ffffff;letter-spacing:-0.04em;text-transform:uppercase;line-height:1.1;">
+      <h1 style="margin:0;font-size:48px;font-weight:800;color:#ffffff;letter-spacing:-0.04em;text-transform:uppercase;line-height:1.1;">
         ${product} <span style="color:#f59e0b;">${version}</span>
       </h1>
-      <p style="margin:10px 0 0 0;font-size:24px;color:#cbd5e1;font-weight:400;">${tagline}</p>
+      <p style="margin:4px 0 0 0;font-size:18px;color:#cbd5e1;font-weight:400;">${tagline}</p>
     </div>
   </td></tr>
 
