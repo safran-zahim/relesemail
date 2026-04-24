@@ -25,7 +25,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
-  const { subject, htmlBody } = req.body || {};
+  const { subject, htmlBody, to } = req.body || {};
 
   if (!subject || !htmlBody) {
     return res.status(400).json({ error: 'Missing required fields: subject, htmlBody' });
@@ -51,9 +51,11 @@ export default async function handler(req, res) {
       throw new Error('Could not obtain Gmail access token');
     }
 
+    const recipient = typeof to === 'string' && to.trim() ? to.trim() : gmailUser;
+
     const rawMessage = [
       `From: ${gmailUser}`,
-      `To: ${gmailUser}`,
+      `To: ${recipient}`,
       `Subject: ${subject}`,
       'MIME-Version: 1.0',
       'Content-Type: text/html; charset="UTF-8"',
@@ -70,7 +72,7 @@ export default async function handler(req, res) {
       },
     });
 
-    return res.status(200).json({ success: true, to: gmailUser });
+    return res.status(200).json({ success: true, to: recipient });
   } catch (error) {
     console.error('Self-test email send failed:', error);
     return res.status(500).json({

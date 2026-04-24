@@ -86,7 +86,7 @@ const INITIAL: FormData = {
   version: '8.1',
   tagline: 'Is Out As a Stable Version',
   brandColor: '#f97316',
-  logoUrl: '/orangehrm-logo.png',
+  logoUrl: '',
   heroImageUrl: '',
   heroTitle: 'NEW FEATURE HIGHLIGHTS',
   heroSubtitle: 'Experience the new features in action. Click the button below to watch quick walkthrough videos.',
@@ -120,6 +120,7 @@ export default function App() {
   const [template, setTemplate] = useState<TemplateType>('release');
   const [form, setForm] = useState<FormData>(INITIAL);
   const [welcome, setWelcome] = useState<WelcomeFormData>(WELCOME_INITIAL);
+  const [testRecipient, setTestRecipient] = useState('');
   const [copied, setCopied] = useState(false);
   const [sending, setSending] = useState(false);
   const [sendStatus, setSendStatus] = useState<string | null>(null);
@@ -195,11 +196,12 @@ export default function App() {
         body: JSON.stringify({
           subject: emailSubject,
           htmlBody: emailHTML,
+          to: testRecipient.trim() || undefined,
         }),
       });
 
       const responseText = await response.text();
-      let result: { error?: string } = {};
+      let result: { error?: string; to?: string } = {};
 
       if (responseText) {
         try {
@@ -214,7 +216,7 @@ export default function App() {
         throw new Error(result.error || fallbackMessage || 'Failed to send test mail');
       }
 
-      setSendStatus('Test mail sent to your Gmail inbox.');
+      setSendStatus(`Test mail sent to ${result.to || 'the target recipient'}.`);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to send test mail';
       if (message.includes('HTTP 404')) {
@@ -267,6 +269,13 @@ export default function App() {
             ))}
           </div>
           <div className="ml-auto flex items-center gap-3">
+            <input
+              type="email"
+              value={testRecipient}
+              onChange={e => setTestRecipient(e.target.value)}
+              placeholder="Send to email (optional)"
+              className="w-64 max-w-[38vw] px-3 py-1.5 rounded-lg border border-indigo-200 text-xs text-gray-700 placeholder-gray-400 bg-white focus:outline-none focus:border-indigo-400"
+            />
             <button
               onClick={handleSendTestMail}
               disabled={sending}
