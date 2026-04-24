@@ -1,5 +1,4 @@
 import { google } from 'googleapis';
-import nodemailer from 'nodemailer';
 
 export const config = {
   runtime: 'nodejs',
@@ -11,6 +10,14 @@ function getEnv(name) {
     throw new Error(`Missing required environment variable: ${name}`);
   }
   return value;
+}
+
+function base64UrlEncode(value) {
+  return Buffer.from(value)
+    .toString('base64')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '');
 }
 
 export default async function handler(req, res) {
@@ -48,23 +55,23 @@ export default async function handler(req, res) {
       throw new Error('Could not obtain Gmail access token');
     }
 
-    const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        type: 'OAuth2',
-        user: gmailUser,
-        clientId,
-        clientSecret,
-        refreshToken,
-        accessToken,
-      },
-    });
+    const rawMessage = [
+      `From: ${gmailUser}`,
+      `To: ${to}`,
+      `Subject: ${subject}`,
+      'MIME-Version: 1.0',
+      'Content-Type: text/html; charset="UTF-8"',
+      '',
+      htmlBody,
+    ].join('\r\n');
 
-    await transporter.sendMail({
-      from: gmailUser,
-      to,
-      subject,
-      html: htmlBody,
+    const gmail = google.gmail({ version: 'v1', auth: oauth2Client });
+
+    await gmail.users.messages.send({
+      userId: 'me',
+      requestBody: {
+        raw: base64UrlEncode(rawMessage),
+      },
     });
 
     return res.status(200).json({ success: true });
