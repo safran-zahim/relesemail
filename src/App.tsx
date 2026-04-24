@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useMemo } from 'react';
+import { useState, useRef, useCallback, useMemo, useEffect } from 'react';
 import { Mail, Copy, Check, Download, Zap, Plus, Trash2, Send } from 'lucide-react';
 import { Section, Field, Input, ListEditor, ImageField } from './components';
 import { generateEmailHTML } from './emailGenerator';
@@ -114,9 +114,6 @@ const INITIAL: FormData = {
   footerText: 'Bring Innovation to Human Resource Management !!!',
 };
 
-
-const ICONS = ['⭐', '📊', '🗓️', '👥', '🔷', '⚡', '🛡️', '📱', '🎯', '🔔', '💼', '🌐'];
-
 function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
@@ -144,7 +141,7 @@ export default function App() {
 
   const previewFilename = template === 'release'
     ? `${form.productName || 'release'}-${form.version || 'email'}.html`
-    : `welcome-${welcome.employeeName?.replace(/\s+/g, '-').toLowerCase() || 'new-member'}.html`;
+    : `welcome-${(welcome.employeeName || 'new-member').replace(/\s+/g, '-').toLowerCase()}.html`;
 
   const emailSubject = template === 'release'
     ? 'Local Test: OrangeHRM 8.1'
@@ -162,20 +159,17 @@ export default function App() {
 
   const handleCopy = async () => {
     try {
-      // Copy as rich HTML so Gmail/Outlook paste it as a rendered email, not raw code
       const blob = new Blob([emailHTML], { type: 'text/html' });
       const item = new ClipboardItem({ 'text/html': blob });
       await navigator.clipboard.write([item]);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      // Fallback: plain text copy (pastes HTML source code)
       try {
         await navigator.clipboard.writeText(emailHTML);
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
       } catch {
-        // Last resort: execCommand
         const el = document.createElement('textarea');
         el.value = emailHTML;
         el.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0;';
@@ -189,8 +183,6 @@ export default function App() {
       }
     }
   };
-
-
 
   const handleDownload = () => {
     const blob = new Blob([emailHTML], { type: 'text/html' });
@@ -220,7 +212,6 @@ export default function App() {
     scrollTimeout.current = setTimeout(() => { lastScrollSource.current = null; }, 1000);
   }, []);
 
-  // Ensure preview stays synced when HTML updates (e.g. while typing)
   useEffect(() => {
     const timer = setTimeout(() => {
       if (activeSection) {
@@ -231,7 +222,6 @@ export default function App() {
   }, [emailHTML, activeSection, scrollToPreview]);
 
   useEffect(() => {
-    // Sync Preview -> Form
     const handleMessage = (event: MessageEvent) => {
       if (event.data?.type === 'PREVIEW_SCROLL' && lastScrollSource.current !== 'form') {
         lastScrollSource.current = 'preview';
@@ -241,21 +231,17 @@ export default function App() {
         if (formElement) {
           formElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
-        
         clearTimeout(scrollTimeout.current);
         scrollTimeout.current = setTimeout(() => { lastScrollSource.current = null; }, 1000);
       }
     };
 
-    // Sync Form -> Preview (on Scroll)
     const observer = new IntersectionObserver(
       (entries) => {
         if (lastScrollSource.current === 'preview') return;
-        
         const visibleEntry = entries.find(e => e.isIntersecting);
         if (visibleEntry) {
-          const formId = visibleEntry.target.id;
-          const sectionId = formId.replace('form-', '');
+          const sectionId = visibleEntry.target.id.replace('form-', '');
           setActiveSection(sectionId);
           scrollToPreview(sectionId);
         }
@@ -266,10 +252,8 @@ export default function App() {
     const formSections = document.querySelectorAll('[id^="form-section-"]');
     formSections.forEach(s => observer.observe(s));
 
-    // Focus follow
     const handleFocus = (e: FocusEvent) => {
-      const target = e.target as HTMLElement;
-      const section = target.closest('[id^="form-section-"]');
+      const section = (e.target as HTMLElement).closest('[id^="form-section-"]');
       if (section) {
         const sectionId = section.id.replace('form-', '');
         setActiveSection(sectionId);
@@ -289,409 +273,181 @@ export default function App() {
   const handleSendTestMail = async () => {
     setSending(true);
     setSendStatus(null);
-
     try {
-      if (sendPayload.bytes > 4_000_000) {
-        throw new Error('Email content is too large. Reduce image sizes before sending.');
-      }
-
-      const response = await fetch('/api/send-test-email', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: sendPayload.payload,
-      });
-
-      const responseText = await response.text();
-      let result: { error?: string; to?: string } = {};
-
-      if (responseText) {
-        try {
-          result = JSON.parse(responseText) as { error?: string };
-        } catch {
-          result = {};
-        }
-      }
-
-      if (!response.ok) {
-        const fallbackMessage = responseText || `HTTP ${response.status}`;
-        throw new Error(result.error || fallbackMessage || 'Failed to send test mail');
-      }
-
-      setSendStatus(`Test mail sent to ${result.to || 'the target recipient'}.`);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to send test mail';
-      if (message.includes('HTTP 404')) {
-        setSendStatus('API route not found. Run the app with Vercel dev or deploy to Vercel so /api/send-test-email exists.');
-      } else {
-        setSendStatus(message);
-      }
+      if (sendPayload.bytes > 4000000) throw new Error('Email too large');
+      const response = await fetch('/api/send-test-email', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: sendPayload.payload });
+      if (!response.ok) throw new Error('Failed');
+      setSendStatus('Sent!');
+    } catch (e) {
+      setSendStatus('Error');
     } finally {
       setSending(false);
     }
   };
 
-  // Feature Categories helpers
-  const addCategory = () => {
-    const keys = Object.keys(featureIcons);
-    set('featureCategories', [
-      ...form.featureCategories,
-      { id: generateId(), icon: '⭐', name: '', iconName: keys.length > 0 ? keys[form.featureCategories.length % keys.length] : undefined, items: [{ id: generateId(), text: '' }] }
-    ]);
-  };
+  const addCategory = () => set('featureCategories', [...form.featureCategories, { id: g(), icon: '⭐', name: '', iconName: 'icon_01', items: [{ id: g(), text: '' }] }]);
   const removeCategory = (id: string) => set('featureCategories', form.featureCategories.filter(c => c.id !== id));
-  const updateCategory = (id: string, patch: Partial<FeatureCategory>) =>
-    set('featureCategories', form.featureCategories.map(c => c.id === id ? { ...c, ...patch } : c));
+  const updateCategory = (id: string, patch: Partial<FeatureCategory>) => set('featureCategories', form.featureCategories.map(c => c.id === id ? { ...c, ...patch } : c));
 
-  // Demo buttons helpers
-  const addDemoBtn = () => set('demoButtons', [...form.demoButtons, { id: generateId(), label: '', url: '' }]);
+  const addDemoBtn = () => set('demoButtons', [...form.demoButtons, { id: g(), label: '', url: '' }]);
   const removeDemoBtn = (id: string) => set('demoButtons', form.demoButtons.filter(b => b.id !== id));
-  const updateDemoBtn = (id: string, patch: Partial<CTAButton>) =>
-    set('demoButtons', form.demoButtons.map(b => b.id === id ? { ...b, ...patch } : b));
+  const updateDemoBtn = (id: string, patch: Partial<CTAButton>) => set('demoButtons', form.demoButtons.map(b => b.id === id ? { ...b, ...patch } : b));
 
   return (
     <div className="min-h-screen bg-[#F0F1F5]">
-      {/* Header */}
       <header className="sticky top-0 z-20 bg-white/80 backdrop-blur-md border-b border-indigo-100 shadow-sm">
         <div className="max-w-screen-2xl mx-auto px-6 h-16 flex items-center gap-3">
-          <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-md">
-            <Zap size={18} />
-          </div>
-          <div>
-            <span className="font-bold text-gray-900 text-base" style={{ fontFamily: "'Inter', sans-serif" }}>Email Generator</span>
-          </div>
-          {/* Template Switcher */}
-          <div className="flex items-center gap-1 bg-indigo-50 border border-indigo-100 rounded-xl p-1 ml-2">
+          <Zap className="text-indigo-600" />
+          <span className="font-bold text-gray-900">Email Generator</span>
+          <div className="flex bg-indigo-50 rounded-xl p-1 ml-4">
             {([['release', '📢 Release'], ['welcome', '🎉 Welcome']] as const).map(([t, label]) => (
-              <button key={t} onClick={() => setTemplate(t)}
-                className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all ${template === t
-                  ? 'bg-white shadow text-indigo-700 border border-indigo-200'
-                  : 'text-gray-500 hover:text-gray-700'
-                  }`}>{label}</button>
+              <button key={t} onClick={() => setTemplate(t)} className={`px-3 py-1 rounded-lg text-[11px] font-semibold transition-all ${template === t ? 'bg-white shadow text-indigo-700' : 'text-gray-500'}`}>{label}</button>
             ))}
           </div>
           <div className="ml-auto flex items-center gap-3">
-            <input
-              type="email"
-              value={testRecipient}
-              onChange={e => setTestRecipient(e.target.value)}
-              placeholder="Send to email (optional)"
-              className="w-64 max-w-[38vw] px-3 py-1.5 rounded-lg border border-indigo-200 text-xs text-gray-700 placeholder-gray-400 bg-white focus:outline-none focus:border-indigo-400"
-            />
-            <div className={`px-2.5 py-1.5 rounded-lg text-[11px] font-semibold border ${sendPayload.bytes > 4_000_000
-              ? 'bg-red-50 border-red-200 text-red-700'
-              : sendPayload.bytes > 3_000_000
-                ? 'bg-amber-50 border-amber-200 text-amber-700'
-                : 'bg-emerald-50 border-emerald-200 text-emerald-700'
-              }`}>
-              Payload: {formatBytes(sendPayload.bytes)}
+            <input type="email" value={testRecipient} onChange={e => setTestRecipient(e.target.value)} placeholder="Test email" className="px-3 py-1.5 rounded-lg border border-indigo-200 text-xs focus:outline-none bg-white" />
+            <div className="flex flex-col items-end gap-0.5">
+              <div className={`px-2.5 py-1.5 rounded-lg text-[11px] font-semibold border transition-colors ${sendPayload.bytes > 4000000
+                ? 'bg-red-50 border-red-200 text-red-700 animate-pulse'
+                : sendPayload.bytes > 3000000
+                  ? 'bg-amber-50 border-amber-200 text-amber-700'
+                  : 'bg-emerald-50 border-emerald-200 text-emerald-700'
+                }`}>
+                Payload: {formatBytes(sendPayload.bytes)}
+              </div>
+              {sendPayload.bytes > 4000000 && (
+                <span className="text-[9px] font-bold text-red-600 uppercase tracking-wider">Size Limit Exceeded (Max 4MB)</span>
+              )}
             </div>
-            <button
-              onClick={handleSendTestMail}
-              disabled={sending}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-600 text-white shadow-md hover:bg-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed transition-all"
-            >
-              <Send size={14} />
-              {sending ? 'Sending...' : 'Send Test Mail'}
-            </button>
-            <button
-              onClick={handleCopy}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all border shadow-sm ${copied
-                ? 'bg-emerald-50 border-emerald-300 text-emerald-700'
-                : 'bg-indigo-50 border-indigo-300 text-indigo-700 hover:bg-indigo-100'
-                }`}
-            >
-              {copied ? <Check size={14} /> : <Copy size={14} />}
-              {copied ? 'Copied!' : 'Copy HTML'}
-            </button>
-            <button
-              onClick={handleDownload}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-md hover:from-indigo-600 hover:to-purple-700 transition-all"
-            >
-              <Download size={14} />
-              Download
-            </button>
+            <button onClick={handleSendTestMail} disabled={sending} className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-semibold hover:bg-emerald-700 disabled:opacity-60 transition-all"><Send size={14} /> Send</button>
+            <button onClick={handleCopy} className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 text-indigo-700 border border-indigo-200 rounded-lg text-xs font-semibold hover:bg-indigo-100 transition-all">{copied ? <Check size={14} /> : <Copy size={14} />} {copied ? 'Copied' : 'Copy HTML'}</button>
+            <button onClick={handleDownload} className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 text-white rounded-lg text-xs font-semibold hover:bg-indigo-700 transition-all"><Download size={14} /> Download</button>
           </div>
         </div>
       </header>
 
-      {/* Mobile Tab Bar */}
-      <div className="lg:hidden flex border-b border-indigo-100 bg-white/80 backdrop-blur-md sticky top-16 z-10">
+      <div className="lg:hidden flex border-b border-indigo-100 bg-white sticky top-16 z-10">
         {(['form', 'preview'] as const).map(tab => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`flex-1 py-2.5 text-xs font-semibold capitalize transition ${activeTab === tab
-              ? 'text-indigo-600 border-b-2 border-indigo-500 bg-indigo-50'
-              : 'text-gray-500 hover:text-gray-700'
-              }`}
-          >
-            {tab === 'form' ? '✏️ Editor' : '👁️ Preview'}
-          </button>
+          <button key={tab} onClick={() => setActiveTab(tab)} className={`flex-1 py-2.5 text-xs font-semibold ${activeTab === tab ? 'text-indigo-600 border-b-2 border-indigo-500 bg-indigo-50' : 'text-gray-500'}`}>{tab === 'form' ? '✏️ Editor' : '👁️ Preview'}</button>
         ))}
       </div>
 
       <main className="max-w-[1800px] mx-auto px-4 lg:px-8 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.8fr] gap-8 items-start">
-
-          {/* ── LEFT: FORM PANEL ── */}
           <div className={`space-y-4 ${activeTab === 'preview' ? 'hidden lg:block' : ''}`}>
             {template === 'welcome' && <WelcomeForm form={welcome} setForm={setWelcome} />}
-
-            {/* Release Email sections — only shown when template === 'release' */}
-            {template === 'release' && <>
-              {/* Branding */}
-              <Section title="Branding & Identity" icon="🎨" color="violet">
-                <div className="grid grid-cols-2 gap-3 mb-3">
-                  <Field label="Company Name">
-                    <Input value={form.companyName} onChange={v => set('companyName', v)} placeholder="OrangeHRM" />
-                  </Field>
-                  <Field label="Product Name">
-                    <Input value={form.productName} onChange={v => set('productName', v)} placeholder="ORANGEHRM" />
-                  </Field>
-                  <Field label="Version">
-                    <Input value={form.version} onChange={v => set('version', v)} placeholder="8.1" />
-                  </Field>
-                  <Field label="Brand Color">
-                    <div className="flex gap-2 items-center">
-                      <input
-                        type="color"
-                        value={form.brandColor}
-                        onChange={e => set('brandColor', e.target.value)}
-                        className="h-10 w-14 rounded-xl border border-indigo-100 cursor-pointer p-0.5"
-                      />
-                      <Input value={form.brandColor} onChange={v => set('brandColor', v)} placeholder="#f97316" />
+            {template === 'release' && (
+              <div className="space-y-6 pb-20">
+                <div id="form-section-branding">
+                  <Section title="Branding & Identity" icon="🎨" color="violet">
+                    <div className="grid grid-cols-2 gap-3 mb-3">
+                      <Field label="Company Name"><Input value={form.companyName} onChange={v => set('companyName', v)} /></Field>
+                      <Field label="Product Name"><Input value={form.productName} onChange={v => set('productName', v)} /></Field>
+                      <Field label="Version"><Input value={form.version} onChange={v => set('version', v)} /></Field>
+                      <Field label="Brand Color">
+                        <div className="flex gap-2 items-center">
+                          <input type="color" value={form.brandColor} onChange={e => set('brandColor', e.target.value)} className="h-10 w-14 rounded-xl border border-indigo-100 cursor-pointer p-0.5" />
+                          <Input value={form.brandColor} onChange={v => set('brandColor', v)} />
+                        </div>
+                      </Field>
                     </div>
-                  </Field>
+                    <ImageField label="Logo" value={form.logoUrl} onChange={v => set('logoUrl', v)} />
+                    <Field label="Tagline"><Input value={form.tagline} onChange={v => set('tagline', v)} /></Field>
+                  </Section>
                 </div>
-                <div className="mb-3">
-                  <ImageField label="Company Logo" value={form.logoUrl} onChange={v => set('logoUrl', v)} hint="optional" />
+
+                <div id="form-section-hero">
+                  <Section title="Hero Section" icon="🖼️" color="indigo">
+                    <ImageField label="Hero Banner" value={form.heroImageUrl} onChange={v => set('heroImageUrl', v)} />
+                  </Section>
                 </div>
-                <Field label="Tagline">
-                  <Input value={form.tagline} onChange={v => set('tagline', v)} placeholder="Is Out As a Stable Version" />
-                </Field>
-              </Section>
 
-              {/* Hero */}
-              <Section title="Hero Section" icon="🖼️" color="indigo">
-                <ImageField label="Hero Banner Image" value={form.heroImageUrl} onChange={v => set('heroImageUrl', v)} hint="top banner" />
-              </Section>
+                <div id="form-section-features">
+                  <Section title="Feature Categories" icon="⚡" color="amber">
+                    <div className="space-y-4">
+                      {form.featureCategories.map((cat) => (
+                        <div key={cat.id} className="border border-amber-100 rounded-2xl bg-amber-50/40 p-3 space-y-2">
+                          <div className="flex items-center gap-2">
+                            <input value={cat.name} onChange={e => updateCategory(cat.id, { name: e.target.value })} placeholder="Category name" className="flex-1 px-3 py-2 bg-white border border-amber-200 rounded-xl text-sm focus:outline-none" />
+                            <button onClick={() => removeCategory(cat.id)} className="p-1.5 text-gray-400 hover:text-red-500 transition-colors"><Trash2 size={14} /></button>
+                          </div>
+                          <ListEditor items={cat.items} onChange={items => updateCategory(cat.id, { items })} />
+                        </div>
+                      ))}
+                    </div>
+                    <button onClick={addCategory} className="mt-4 flex items-center gap-2 px-3 py-2 bg-amber-100 text-amber-700 rounded-xl text-xs font-semibold hover:bg-amber-200 transition-all w-full justify-center"><Plus size={14} /> Add Category</button>
+                    <div className="pt-4 mt-4 border-t border-amber-100"><ImageField label="Section Image" value={form.featuresImageUrl} onChange={v => set('featuresImageUrl', v)} /></div>
+                  </Section>
+                </div>
 
-              {/* Features */}
-              <Section title="Feature Categories" icon="⚡" color="amber">
-                <p className="text-xs text-gray-500 -mt-1">Add feature categories like Performance Core, Reports & Analytics, etc.</p>
-                <div className="space-y-4">
-                  {form.featureCategories.map((cat, ci) => (
-                    <div key={cat.id} className="border border-amber-100 rounded-2xl bg-amber-50/40 p-3 space-y-2">
-                      <div className="flex items-center gap-2">
-                        <select
-                          value={cat.iconName || ''}
-                          onChange={e => updateCategory(cat.id, { iconName: e.target.value })}
-                          className="w-24 px-1 py-2 bg-white border border-amber-200 rounded-xl text-center text-xs focus:outline-none focus:border-amber-400"
-                        >
-                          <option value="">Default</option>
-                          {Object.keys(featureIcons).map(ic => <option key={ic} value={ic}>{ic}</option>)}
-                        </select>
-                        <input
-                          value={cat.name}
-                          onChange={e => updateCategory(cat.id, { name: e.target.value })}
-                          placeholder={`Category ${ci + 1} name`}
-                          className="flex-1 px-3 py-2 bg-white border border-amber-200 rounded-xl text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100 transition"
-                        />
-                        <button onClick={() => removeCategory(cat.id)} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition">
-                          <Trash2 size={14} />
-                        </button>
+                <div id="form-section-highlights">
+                  <Section title="New Feature Highlights" icon="🌟" color="pink">
+                    <Field label="Title"><Input value={form.highlightTitle} onChange={v => set('highlightTitle', v)} /></Field>
+                    <Field label="Description"><textarea value={form.highlightDesc} onChange={e => set('highlightDesc', e.target.value)} rows={3} className="w-full px-3 py-2.5 bg-white border border-pink-100 rounded-xl text-sm focus:outline-none transition resize-none" /></Field>
+                    <ImageField label="Highlight Image" value={form.highlightImageUrl} onChange={v => set('highlightImageUrl', v)} />
+                    <Field label="CTA URL"><Input value={form.highlightVideoUrl} onChange={v => set('highlightVideoUrl', v)} /></Field>
+                  </Section>
+                </div>
+
+                <div id="form-section-enhancements">
+                  <Section title="Enhancements / Bug Fixes" icon="🔧" color="emerald">
+                    <ListEditor items={form.enhancements} onChange={items => set('enhancements', items)} withIcons={true} />
+                  </Section>
+                </div>
+
+                <div id="form-section-hosted">
+                  <Section title="Hosted Environment" icon="🌐" color="sky">
+                    <div className="flex items-center gap-3 p-3 bg-sky-50 rounded-xl mb-3 border border-sky-100">
+                      <input type="checkbox" checked={form.hostedEnvEnabled} onChange={e => set('hostedEnvEnabled', e.target.checked)} className="w-4 h-4 accent-sky-600" />
+                      <label className="text-sm font-medium text-sky-800">Include Section</label>
+                    </div>
+                    {form.hostedEnvEnabled && (
+                      <div className="space-y-3">
+                        <Field label="Description"><textarea value={form.hostedEnvDesc} onChange={e => set('hostedEnvDesc', e.target.value)} rows={2} className="w-full px-3 py-2.5 bg-white border border-sky-100 rounded-xl text-sm focus:outline-none transition resize-none" /></Field>
+                        <ImageField label="Env Image" value={form.hostedEnvImageUrl} onChange={v => set('hostedEnvImageUrl', v)} />
+                        <Field label="Env URL"><Input value={form.hostedUrl} onChange={v => set('hostedUrl', v)} /></Field>
                       </div>
-                      <ListEditor
-                        items={cat.items}
-                        onChange={items => updateCategory(cat.id, { items })}
-                        placeholder="Feature description..."
-                      />
+                    )}
+                  </Section>
+                </div>
+
+                <div id="form-section-demo">
+                  <Section title="Stakeholder Demo" icon="🎬" color="orange">
+                    <Field label="Title"><textarea value={form.demoTitle} onChange={e => set('demoTitle', e.target.value)} rows={2} className="w-full px-3 py-2.5 bg-white border border-orange-100 rounded-xl text-sm focus:outline-none transition resize-none" /></Field>
+                    <ImageField label="Demo Image" value={form.demoImageUrl} onChange={v => set('demoImageUrl', v)} />
+                    <div className="space-y-2 mt-3">
+                      {form.demoButtons.map((btn, bi) => (
+                        <div key={btn.id} className="flex gap-2 items-center">
+                          <span className="text-xs text-gray-400 w-4">{bi + 1}.</span>
+                          <input value={btn.label} onChange={e => updateDemoBtn(btn.id, { label: e.target.value })} placeholder="Label" className="flex-1 px-3 py-2 bg-white border border-orange-100 rounded-xl text-sm focus:outline-none" />
+                          <input value={btn.url} onChange={e => updateDemoBtn(btn.id, { url: e.target.value })} placeholder="URL" className="flex-1 px-3 py-2 bg-white border border-orange-100 rounded-xl text-sm focus:outline-none" />
+                          <button onClick={() => removeDemoBtn(btn.id)} className="p-1.5 text-gray-400 hover:text-red-500 transition-colors"><Trash2 size={13} /></button>
+                        </div>
+                      ))}
                     </div>
-                  ))}
+                    <button onClick={addDemoBtn} className="mt-3 flex items-center gap-2 px-3 py-2 bg-orange-100 text-orange-700 rounded-xl text-xs font-semibold hover:bg-orange-200 transition-all"><Plus size={13} /> Add Button</button>
+                  </Section>
                 </div>
-                <button
-                  onClick={addCategory}
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold text-amber-700 bg-amber-100 hover:bg-amber-200 rounded-xl transition w-full justify-center mb-4"
-                >
-                  <Plus size={14} /> Add Category
-                </button>
-                <div className="pt-4 border-t border-amber-100">
-                  <ImageField
-                    label="Section Image (After Categories)"
-                    value={form.featuresImageUrl}
-                    onChange={v => set('featuresImageUrl', v)}
-                    hint="optional"
-                  />
+
+                <div id="form-section-footer">
+                  <Section title="Footer" icon="📝" color="indigo">
+                    <Field label="Footer Text"><Input value={form.footerText} onChange={v => set('footerText', v)} /></Field>
+                  </Section>
                 </div>
-              </Section>
-
-              {/* Feature Highlights */}
-              <Section title="New Feature Highlights" icon="🌟" color="pink">
-                <Field label="Section Title">
-                  <Input value={form.highlightTitle} onChange={v => set('highlightTitle', v)} placeholder="NEW FEATURE HIGHLIGHTS" />
-                </Field>
-                <Field label="Description">
-                  <textarea
-                    value={form.highlightDesc}
-                    onChange={e => set('highlightDesc', e.target.value)}
-                    rows={3}
-                    placeholder="Experience the new features in action..."
-                    className="w-full px-3 py-2.5 bg-white border border-pink-100 rounded-xl text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-pink-400 focus:ring-2 focus:ring-pink-100 transition resize-none"
-                  />
-                </Field>
-                <ImageField label="Highlight Image" value={form.highlightImageUrl} onChange={v => set('highlightImageUrl', v)} />
-                <Field label="Video / CTA Button URL" hint="optional">
-                  <Input value={form.highlightVideoUrl} onChange={v => set('highlightVideoUrl', v)} placeholder="https://youtube.com/..." />
-                </Field>
-              </Section>
-
-              {/* Enhancements */}
-              <Section title="Enhancements / Bug Fixes" icon="🔧" color="emerald">
-                <ListEditor
-                  items={form.enhancements}
-                  onChange={items => set('enhancements', items)}
-                  placeholder="Customer reported bug fix..."
-                  withIcons={true}
-                  iconOptions={Object.keys(featureIcons)}
-                />
-              </Section>
-
-              {/* Hosted Environment */}
-              <Section title="Hosted Environment" icon="🌐" color="sky">
-                <div className="flex items-center gap-3 p-3 bg-sky-50 rounded-xl border border-sky-100">
-                  <input
-                    type="checkbox"
-                    id="hostedEnvEnabled"
-                    checked={form.hostedEnvEnabled}
-                    onChange={e => set('hostedEnvEnabled', e.target.checked)}
-                    className="w-4 h-4 accent-sky-600"
-                  />
-                  <label htmlFor="hostedEnvEnabled" className="text-sm font-medium text-sky-800 cursor-pointer">
-                    Include Hosted Environment Section
-                  </label>
-                </div>
-                {form.hostedEnvEnabled && (
-                  <div className="space-y-3">
-                    <Field label="Description">
-                      <textarea
-                        value={form.hostedEnvDesc}
-                        onChange={e => set('hostedEnvDesc', e.target.value)}
-                        rows={2}
-                        className="w-full px-3 py-2.5 bg-white border border-sky-100 rounded-xl text-sm text-gray-800 focus:outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-100 transition resize-none"
-                      />
-                    </Field>
-                    <ImageField label="Environment Image" value={form.hostedEnvImageUrl} onChange={v => set('hostedEnvImageUrl', v)} />
-                    <Field label="Environment URL">
-                      <Input value={form.hostedUrl} onChange={v => set('hostedUrl', v)} placeholder="https://env.example.com/" />
-                    </Field>
-                    <div className="grid grid-cols-2 gap-3">
-                      <Field label="Admin Username">
-                        <Input value={form.adminUser} onChange={v => set('adminUser', v)} placeholder="admin" />
-                      </Field>
-                      <Field label="Admin Password">
-                        <Input value={form.adminPass} onChange={v => set('adminPass', v)} placeholder="BestSystemEver100%" />
-                      </Field>
-                      <Field label="Sysadmin Username">
-                        <Input value={form.sysadminUser} onChange={v => set('sysadminUser', v)} placeholder="UN_ohrmSysAdmin" />
-                      </Field>
-                      <Field label="Sysadmin Password">
-                        <Input value={form.sysadminPass} onChange={v => set('sysadminPass', v)} placeholder="PW: ...8Nmw" />
-                      </Field>
-                    </div>
-                    <Field label="General User Password">
-                      <Input value={form.generalPass} onChange={v => set('generalPass', v)} placeholder="user@OHRM123" />
-                    </Field>
-                  </div>
-                )}
-              </Section>
-
-              {/* Demo / CTA Buttons */}
-              <Section title="Demo Video & Links" icon="🎬" color="orange">
-                <Field label="Section Title">
-                  <textarea
-                    value={form.demoTitle}
-                    onChange={e => set('demoTitle', e.target.value)}
-                    rows={2}
-                    className="w-full px-3 py-2.5 bg-white border border-orange-100 rounded-xl text-sm text-gray-800 focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-100 transition resize-none"
-                  />
-                </Field>
-                <ImageField label="Demo Banner Image" value={form.demoImageUrl} onChange={v => set('demoImageUrl', v)} />
-                <div className="space-y-2">
-                  {form.demoButtons.map((btn, bi) => (
-                    <div key={btn.id} className="flex gap-2 items-center">
-                      <span className="text-xs text-gray-400 w-4 shrink-0">{bi + 1}.</span>
-                      <input
-                        value={btn.label}
-                        onChange={e => updateDemoBtn(btn.id, { label: e.target.value })}
-                        placeholder="Button label"
-                        className="flex-1 px-3 py-2 bg-white border border-orange-100 rounded-xl text-sm text-gray-800 focus:outline-none focus:border-orange-400 transition"
-                      />
-                      <input
-                        value={btn.url}
-                        onChange={e => updateDemoBtn(btn.id, { url: e.target.value })}
-                        placeholder="URL"
-                        className="flex-1 px-3 py-2 bg-white border border-orange-100 rounded-xl text-sm text-gray-800 focus:outline-none focus:border-orange-400 transition"
-                      />
-                      <button onClick={() => removeDemoBtn(btn.id)} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition">
-                        <Trash2 size={13} />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-                <button onClick={addDemoBtn} className="flex items-center gap-2 text-xs font-semibold text-orange-700 hover:text-orange-800 hover:bg-orange-50 px-2 py-1.5 rounded-xl transition">
-                  <Plus size={13} /> Add Button
-                </button>
-              </Section>
-
-              {/* Footer */}
-              <Section title="Footer" icon="📝" color="indigo" defaultOpen={false}>
-                <Field label="Footer Text">
-                  <Input value={form.footerText} onChange={v => set('footerText', v)} placeholder="Bring Innovation to Human Resource Management !!!" />
-                </Field>
-              </Section>
-            </> /* end release sections */}
+              </div>
+            )}
           </div>
 
-          {/* ── RIGHT: PREVIEW PANEL ── */}
           <div className={`lg:sticky lg:top-24 ${activeTab === 'form' ? 'hidden lg:block' : ''}`}>
-            {sendStatus ? (
-              <div className="mb-3 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-800">
-                {sendStatus}
+            {sendStatus && <div className="mb-3 p-3 bg-emerald-50 text-emerald-800 rounded-xl text-xs font-semibold border border-emerald-200">{sendStatus}</div>}
+            <div className="flex items-center gap-2 mb-3"><Mail className="text-indigo-600" size={16} /><span className="font-bold text-gray-800 text-sm">Live Email Preview</span></div>
+            <div className="rounded-2xl overflow-hidden border-2 border-indigo-100 shadow-xl bg-white">
+              <div className="flex items-center gap-2 px-4 py-2.5 bg-gray-50 border-b border-gray-100">
+                <div className="w-3 h-3 rounded-full bg-red-400" /><div className="w-3 h-3 rounded-full bg-amber-400" /><div className="w-3 h-3 rounded-full bg-emerald-400" />
+                <div className="flex-1 mx-3 px-3 py-1 bg-white rounded-md text-[10px] text-gray-400 font-mono text-center truncate">{previewFilename}</div>
               </div>
-            ) : null}
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <Mail size={16} className="text-indigo-500" />
-                <span className="font-bold text-gray-800 text-sm">Live Email Preview</span>
-                <span className="bg-emerald-100 text-emerald-700 text-xs font-semibold px-2 py-0.5 rounded-full">HTML</span>
-              </div>
+              <iframe ref={iframeRef} title="Preview" srcDoc={emailHTML} className="w-full" style={{ height: 'calc(100vh - 180px)', minHeight: '600px', border: 'none' }} />
             </div>
-
-            {/* Email Preview Frame */}
-            <div className="rounded-2xl overflow-hidden border-2 border-indigo-100 shadow-xl bg-gray-100">
-              {/* Browser chrome */}
-              <div className="flex items-center gap-2 px-4 py-2.5 bg-gray-200 border-b border-gray-300">
-                <div className="w-3 h-3 rounded-full bg-red-400" />
-                <div className="w-3 h-3 rounded-full bg-amber-400" />
-                <div className="w-3 h-3 rounded-full bg-emerald-400" />
-                <div className="flex-1 mx-3 px-3 py-1 bg-white rounded-md text-xs text-gray-500 font-mono text-center truncate">
-                  {previewFilename}
-                </div>
-              </div>
-              <iframe
-                ref={iframeRef}
-                title="Email Preview"
-                srcDoc={emailHTML}
-                className="w-full scrollbar-thin"
-                style={{ height: 'calc(100vh - 180px)', minHeight: '600px', border: 'none', background: '#f3f4f6' }}
-              />
-            </div>
-
-            <p className="text-xs text-gray-400 text-center mt-2">
-              ✉️ Rich HTML email — copy & paste into Gmail, Outlook, or download the .html file
-            </p>
           </div>
         </div>
       </main>
