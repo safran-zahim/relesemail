@@ -20,7 +20,7 @@ export function generateEmailHTML(data: FormData): string {
     ? data.logoUrl
     : '/orangehrm-logo.png';
   const logoElement = `<img src="${resolvedLogoSrc}" height="60" alt="${company}" style="display:inline-block;height:60px;width:auto;max-width:200px;border:0;">`;
-  const mailWidth = 800;
+  const mailWidth = 600;
 
 
   const innerBg = 'background-color:#050a1f;';
@@ -153,7 +153,7 @@ export function generateEmailHTML(data: FormData): string {
     <div style="height:2px;background:linear-gradient(90deg,transparent,${brand},transparent);border-radius:2px;margin-top:10px;"></div>
   </td></tr>
 
-  ${categoriesHTML ? `<tr><td style="${innerBg}padding:4px 0 20px;"><table width="100%" cellpadding="0" cellspacing="0">${categoriesHTML}</table></td></tr>` : ''}
+  ${categoriesHTML ? `<tr><td style="${innerBg}padding:4px 0 ;"><table width="100%" cellpadding="0" cellspacing="0">${categoriesHTML}</table></td></tr>` : ''}
   ${data.featuresImageUrl ? renderFixedImageRow(data.featuresImageUrl, 'Features Section Image') : ''}
 
 
