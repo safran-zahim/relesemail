@@ -36,10 +36,11 @@ export function Field({ label, hint, children }: { label: string; hint?: string;
 }
 
 export function Section({
-  title, icon, children, color = 'indigo', defaultOpen = true
+  title, icon, children, color = 'indigo', defaultOpen = true, onActive
 }: {
   title: string; icon: string; children: React.ReactNode;
   color?: string; defaultOpen?: boolean;
+  onActive?: () => void;
 }) {
   const [open, setOpen] = useState(defaultOpen);
   const colorMap: Record<string, string> = {
@@ -55,7 +56,10 @@ export function Section({
   return (
     <div className="rounded-2xl border border-gray-200 overflow-hidden shadow-sm bg-white">
       <button
-        onClick={() => setOpen(o => !o)}
+        onClick={() => {
+          setOpen(o => !o);
+          onActive?.();
+        }}
         className={`w-full flex items-center justify-between px-4 py-3.5 border-b text-left transition hover:brightness-95 ${headerCls}`}
       >
         <span className="flex items-center gap-2 font-semibold text-sm">

@@ -200,6 +200,43 @@ export default function App() {
     a.click();
   };
 
+  const lastScrollSource = useRef<'form' | 'preview' | null>(null);
+  const scrollTimeout = useRef<any>(null);
+
+  const scrollToPreview = (sectionId: string) => {
+    if (lastScrollSource.current === 'preview') return;
+    lastScrollSource.current = 'form';
+    
+    if (!iframeRef.current?.contentWindow) return;
+    const doc = iframeRef.current.contentDocument || iframeRef.current.contentWindow.document;
+    const element = doc.getElementById(sectionId);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    clearTimeout(scrollTimeout.current);
+    scrollTimeout.current = setTimeout(() => { lastScrollSource.current = null; }, 1000);
+  };
+
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data?.type === 'PREVIEW_SCROLL' && lastScrollSource.current !== 'form') {
+        lastScrollSource.current = 'preview';
+        const sectionId = event.data.sectionId;
+        const formElement = document.getElementById(`form-${sectionId}`);
+        if (formElement) {
+          formElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+        
+        clearTimeout(scrollTimeout.current);
+        scrollTimeout.current = setTimeout(() => { lastScrollSource.current = null; }, 1000);
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, []);
+
   const handleSendTestMail = async () => {
     setSending(true);
     setSendStatus(null);
@@ -386,185 +423,230 @@ export default function App() {
                   <Input value={form.tagline} onChange={v => set('tagline', v)} placeholder="Is Out As a Stable Version" />
                 </Field>
               </Section>
-
-              {/* Hero */}
-              <Section title="Hero Section" icon="🖼️" color="indigo">
-                <ImageField label="Hero Banner Image" value={form.heroImageUrl} onChange={v => set('heroImageUrl', v)} hint="top banner" />
-              </Section>
-
-              {/* Features */}
-              <Section title="Feature Categories" icon="⚡" color="amber">
-                <p className="text-xs text-gray-500 -mt-1">Add feature categories like Performance Core, Reports & Analytics, etc.</p>
-                <div className="space-y-4">
-                  {form.featureCategories.map((cat, ci) => (
-                    <div key={cat.id} className="border border-amber-100 rounded-2xl bg-amber-50/40 p-3 space-y-2">
-                      <div className="flex items-center gap-2">
-                        <select
-                          value={cat.iconName || ''}
-                          onChange={e => updateCategory(cat.id, { iconName: e.target.value })}
-                          className="w-24 px-1 py-2 bg-white border border-amber-200 rounded-xl text-center text-xs focus:outline-none focus:border-amber-400"
-                        >
-                          <option value="">Default</option>
-                          {Object.keys(featureIcons).map(ic => <option key={ic} value={ic}>{ic}</option>)}
-                        </select>
+              <div id="form-section-branding">
+                <Section title="Branding & Identity" icon="🎨" color="violet">
+                  <div className="grid grid-cols-2 gap-3 mb-3">
+                    <Field label="Company Name">
+                      <Input value={form.companyName} onChange={v => set('companyName', v)} placeholder="OrangeHRM" />
+                    </Field>
+                    <Field label="Product Name">
+                      <Input value={form.productName} onChange={v => set('productName', v)} placeholder="ORANGEHRM" />
+                    </Field>
+                    <Field label="Version">
+                      <Input value={form.version} onChange={v => set('version', v)} placeholder="8.1" />
+                    </Field>
+                    <Field label="Brand Color">
+                      <div className="flex gap-2 items-center">
                         <input
-                          value={cat.name}
-                          onChange={e => updateCategory(cat.id, { name: e.target.value })}
-                          placeholder={`Category ${ci + 1} name`}
-                          className="flex-1 px-3 py-2 bg-white border border-amber-200 rounded-xl text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100 transition"
+                          type="color"
+                          value={form.brandColor}
+                          onChange={e => set('brandColor', e.target.value)}
+                          className="h-10 w-14 rounded-xl border border-indigo-100 cursor-pointer p-0.5"
                         />
-                        <button onClick={() => removeCategory(cat.id)} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition">
-                          <Trash2 size={14} />
-                        </button>
+                        <Input value={form.brandColor} onChange={v => set('brandColor', v)} placeholder="#f97316" />
                       </div>
-                      <ListEditor
-                        items={cat.items}
-                        onChange={items => updateCategory(cat.id, { items })}
-                        placeholder="Feature description..."
-                      />
-                    </div>
-                  ))}
-                </div>
-                <button
-                  onClick={addCategory}
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold text-amber-700 bg-amber-100 hover:bg-amber-200 rounded-xl transition w-full justify-center mb-4"
-                >
-                  <Plus size={14} /> Add Category
-                </button>
-                <div className="pt-4 border-t border-amber-100">
-                  <ImageField 
-                    label="Section Image (After Categories)" 
-                    value={form.featuresImageUrl} 
-                    onChange={v => set('featuresImageUrl', v)} 
-                    hint="optional"
-                  />
-                </div>
-              </Section>
-
-              {/* Feature Highlights */}
-              <Section title="New Feature Highlights" icon="🌟" color="pink">
-                <Field label="Section Title">
-                  <Input value={form.highlightTitle} onChange={v => set('highlightTitle', v)} placeholder="NEW FEATURE HIGHLIGHTS" />
-                </Field>
-                <Field label="Description">
-                  <textarea
-                    value={form.highlightDesc}
-                    onChange={e => set('highlightDesc', e.target.value)}
-                    rows={3}
-                    placeholder="Experience the new features in action..."
-                    className="w-full px-3 py-2.5 bg-white border border-pink-100 rounded-xl text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-pink-400 focus:ring-2 focus:ring-pink-100 transition resize-none"
-                  />
-                </Field>
-                <ImageField label="Highlight Image" value={form.highlightImageUrl} onChange={v => set('highlightImageUrl', v)} />
-                <Field label="Video / CTA Button URL" hint="optional">
-                  <Input value={form.highlightVideoUrl} onChange={v => set('highlightVideoUrl', v)} placeholder="https://youtube.com/..." />
-                </Field>
-              </Section>
-
-              {/* Enhancements */}
-              <Section title="Enhancements / Bug Fixes" icon="🔧" color="emerald">
-                <ListEditor
-                  items={form.enhancements}
-                  onChange={items => set('enhancements', items)}
-                  placeholder="Customer reported bug fix..."
-                  withIcons={true}
-                  iconOptions={Object.keys(featureIcons)}
-                />
-              </Section>
-
-              {/* Hosted Environment */}
-              <Section title="Hosted Environment" icon="🌐" color="sky">
-                <div className="flex items-center gap-3 p-3 bg-sky-50 rounded-xl border border-sky-100">
-                  <input
-                    type="checkbox"
-                    id="hostedEnvEnabled"
-                    checked={form.hostedEnvEnabled}
-                    onChange={e => set('hostedEnvEnabled', e.target.checked)}
-                    className="w-4 h-4 accent-sky-600"
-                  />
-                  <label htmlFor="hostedEnvEnabled" className="text-sm font-medium text-sky-800 cursor-pointer">
-                    Include Hosted Environment Section
-                  </label>
-                </div>
-                {form.hostedEnvEnabled && (
-                  <div className="space-y-3">
-                    <Field label="Description">
-                      <textarea
-                        value={form.hostedEnvDesc}
-                        onChange={e => set('hostedEnvDesc', e.target.value)}
-                        rows={2}
-                        className="w-full px-3 py-2.5 bg-white border border-sky-100 rounded-xl text-sm text-gray-800 focus:outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-100 transition resize-none"
-                      />
-                    </Field>
-                    <ImageField label="Environment Image" value={form.hostedEnvImageUrl} onChange={v => set('hostedEnvImageUrl', v)} />
-                    <Field label="Environment URL">
-                      <Input value={form.hostedUrl} onChange={v => set('hostedUrl', v)} placeholder="https://env.example.com/" />
-                    </Field>
-                    <div className="grid grid-cols-2 gap-3">
-                      <Field label="Admin Username">
-                        <Input value={form.adminUser} onChange={v => set('adminUser', v)} placeholder="admin" />
-                      </Field>
-                      <Field label="Admin Password">
-                        <Input value={form.adminPass} onChange={v => set('adminPass', v)} placeholder="BestSystemEver100%" />
-                      </Field>
-                      <Field label="Sysadmin Username">
-                        <Input value={form.sysadminUser} onChange={v => set('sysadminUser', v)} placeholder="UN_ohrmSysAdmin" />
-                      </Field>
-                      <Field label="Sysadmin Password">
-                        <Input value={form.sysadminPass} onChange={v => set('sysadminPass', v)} placeholder="PW: ...8Nmw" />
-                      </Field>
-                    </div>
-                    <Field label="General User Password">
-                      <Input value={form.generalPass} onChange={v => set('generalPass', v)} placeholder="user@OHRM123" />
                     </Field>
                   </div>
-                )}
-              </Section>
+                  <div className="mb-3">
+                    <ImageField label="Company Logo" value={form.logoUrl} onChange={v => set('logoUrl', v)} hint="optional" />
+                  </div>
+                  <Field label="Tagline">
+                    <Input value={form.tagline} onChange={v => set('tagline', v)} placeholder="Is Out As a Stable Version" />
+                  </Field>
+                </Section>
+              </div>
+
+              <div id="form-section-hero">
+                <Section title="Hero Section" icon="🖼️" color="indigo">
+                  <ImageField label="Hero Banner Image" value={form.heroImageUrl} onChange={v => set('heroImageUrl', v)} hint="top banner" />
+                </Section>
+              </div>
+
+              {/* Features */}
+              <div id="form-section-features">
+                <Section title="Feature Categories" icon="⚡" color="amber" onActive={() => scrollToPreview('section-features')}>
+                  <p className="text-xs text-gray-500 -mt-1">Add feature categories like Performance Core, Reports & Analytics, etc.</p>
+                  <div className="space-y-4">
+                    {form.featureCategories.map((cat, ci) => (
+                      <div key={cat.id} className="border border-amber-100 rounded-2xl bg-amber-50/40 p-3 space-y-2">
+                        <div className="flex items-center gap-2">
+                          <select
+                            value={cat.iconName || ''}
+                            onChange={e => updateCategory(cat.id, { iconName: e.target.value })}
+                            className="w-24 px-1 py-2 bg-white border border-amber-200 rounded-xl text-center text-xs focus:outline-none focus:border-amber-400"
+                          >
+                            <option value="">Default</option>
+                            {Object.keys(featureIcons).map(ic => <option key={ic} value={ic}>{ic}</option>)}
+                          </select>
+                          <input
+                            value={cat.name}
+                            onChange={e => updateCategory(cat.id, { name: e.target.value })}
+                            placeholder={`Category ${ci + 1} name`}
+                            className="flex-1 px-3 py-2 bg-white border border-amber-200 rounded-xl text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100 transition"
+                          />
+                          <button onClick={() => removeCategory(cat.id)} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition">
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                        <ListEditor
+                          items={cat.items}
+                          onChange={items => updateCategory(cat.id, { items })}
+                          placeholder="Feature description..."
+                        />
+                      </div>
+                    ))}
+                  </div>
+                  <button
+                    onClick={addCategory}
+                    className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold text-amber-700 bg-amber-100 hover:bg-amber-200 rounded-xl transition w-full justify-center mb-4"
+                  >
+                    <Plus size={14} /> Add Category
+                  </button>
+                  <div className="pt-4 border-t border-amber-100">
+                    <ImageField 
+                      label="Section Image (After Categories)" 
+                      value={form.featuresImageUrl} 
+                      onChange={v => set('featuresImageUrl', v)} 
+                      hint="optional"
+                    />
+                  </div>
+                </Section>
+              </div>
+
+              {/* Feature Highlights */}
+              <div id="form-section-highlights">
+                <Section title="New Feature Highlights" icon="🌟" color="pink" onActive={() => scrollToPreview('section-highlights')}>
+                  <Field label="Section Title">
+                    <Input value={form.highlightTitle} onChange={v => set('highlightTitle', v)} placeholder="NEW FEATURE HIGHLIGHTS" />
+                  </Field>
+                  <Field label="Description">
+                    <textarea
+                      value={form.highlightDesc}
+                      onChange={e => set('highlightDesc', e.target.value)}
+                      rows={3}
+                      placeholder="Experience the new features in action..."
+                      className="w-full px-3 py-2.5 bg-white border border-pink-100 rounded-xl text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-pink-400 focus:ring-2 focus:ring-pink-100 transition resize-none"
+                    />
+                  </Field>
+                  <ImageField label="Highlight Image" value={form.highlightImageUrl} onChange={v => set('highlightImageUrl', v)} />
+                  <Field label="Video / CTA Button URL" hint="optional">
+                    <Input value={form.highlightVideoUrl} onChange={v => set('highlightVideoUrl', v)} placeholder="https://youtube.com/..." />
+                  </Field>
+                </Section>
+              </div>
+
+              {/* Enhancements */}
+              <div id="form-section-enhancements">
+                <Section title="Enhancements / Bug Fixes" icon="🔧" color="emerald" onActive={() => scrollToPreview('section-enhancements')}>
+                  <ListEditor
+                    items={form.enhancements}
+                    onChange={items => set('enhancements', items)}
+                    placeholder="Customer reported bug fix..."
+                    withIcons={true}
+                    iconOptions={Object.keys(featureIcons)}
+                  />
+                </Section>
+              </div>
+
+              {/* Hosted Environment */}
+              <div id="form-section-hosted">
+                <Section title="Hosted Environment" icon="🌐" color="sky" onActive={() => scrollToPreview('section-hosted')}>
+                  <div className="flex items-center gap-3 p-3 bg-sky-50 rounded-xl border border-sky-100">
+                    <input
+                      type="checkbox"
+                      id="hostedEnvEnabled"
+                      checked={form.hostedEnvEnabled}
+                      onChange={e => set('hostedEnvEnabled', e.target.checked)}
+                      className="w-4 h-4 accent-sky-600"
+                    />
+                    <label htmlFor="hostedEnvEnabled" className="text-sm font-medium text-sky-800 cursor-pointer">
+                      Include Hosted Environment Section
+                    </label>
+                  </div>
+                  {form.hostedEnvEnabled && (
+                    <div className="space-y-3">
+                      <Field label="Description">
+                        <textarea
+                          value={form.hostedEnvDesc}
+                          onChange={e => set('hostedEnvDesc', e.target.value)}
+                          rows={2}
+                          className="w-full px-3 py-2.5 bg-white border border-sky-100 rounded-xl text-sm text-gray-800 focus:outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-100 transition resize-none"
+                        />
+                      </Field>
+                      <ImageField label="Environment Image" value={form.hostedEnvImageUrl} onChange={v => set('hostedEnvImageUrl', v)} />
+                      <Field label="Environment URL">
+                        <Input value={form.hostedUrl} onChange={v => set('hostedUrl', v)} placeholder="https://env.example.com/" />
+                      </Field>
+                      <div className="grid grid-cols-2 gap-3">
+                        <Field label="Admin Username">
+                          <Input value={form.adminUser} onChange={v => set('adminUser', v)} placeholder="admin" />
+                        </Field>
+                        <Field label="Admin Password">
+                          <Input value={form.adminPass} onChange={v => set('adminPass', v)} placeholder="BestSystemEver100%" />
+                        </Field>
+                        <Field label="Sysadmin Username">
+                          <Input value={form.sysadminUser} onChange={v => set('sysadminUser', v)} placeholder="UN_ohrmSysAdmin" />
+                        </Field>
+                        <Field label="Sysadmin Password">
+                          <Input value={form.sysadminPass} onChange={v => set('sysadminPass', v)} placeholder="PW: ...8Nmw" />
+                        </Field>
+                      </div>
+                      <Field label="General User Password">
+                        <Input value={form.generalPass} onChange={v => set('generalPass', v)} placeholder="user@OHRM123" />
+                      </Field>
+                    </div>
+                  )}
+                </Section>
+              </div>
 
               {/* Demo / CTA Buttons */}
-              <Section title="Demo Video & Links" icon="🎬" color="orange">
-                <Field label="Section Title">
-                  <textarea
-                    value={form.demoTitle}
-                    onChange={e => set('demoTitle', e.target.value)}
-                    rows={2}
-                    className="w-full px-3 py-2.5 bg-white border border-orange-100 rounded-xl text-sm text-gray-800 focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-100 transition resize-none"
-                  />
-                </Field>
-                <ImageField label="Demo Banner Image" value={form.demoImageUrl} onChange={v => set('demoImageUrl', v)} />
-                <div className="space-y-2">
-                  {form.demoButtons.map((btn, bi) => (
-                    <div key={btn.id} className="flex gap-2 items-center">
-                      <span className="text-xs text-gray-400 w-4 shrink-0">{bi + 1}.</span>
-                      <input
-                        value={btn.label}
-                        onChange={e => updateDemoBtn(btn.id, { label: e.target.value })}
-                        placeholder="Button label"
-                        className="flex-1 px-3 py-2 bg-white border border-orange-100 rounded-xl text-sm text-gray-800 focus:outline-none focus:border-orange-400 transition"
-                      />
-                      <input
-                        value={btn.url}
-                        onChange={e => updateDemoBtn(btn.id, { url: e.target.value })}
-                        placeholder="URL"
-                        className="flex-1 px-3 py-2 bg-white border border-orange-100 rounded-xl text-sm text-gray-800 focus:outline-none focus:border-orange-400 transition"
-                      />
-                      <button onClick={() => removeDemoBtn(btn.id)} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition">
-                        <Trash2 size={13} />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-                <button onClick={addDemoBtn} className="flex items-center gap-2 text-xs font-semibold text-orange-700 hover:text-orange-800 hover:bg-orange-50 px-2 py-1.5 rounded-xl transition">
-                  <Plus size={13} /> Add Button
-                </button>
-              </Section>
+              <div id="form-section-demo">
+                <Section title="Stakeholder Demo" icon="🎬" color="orange" onActive={() => scrollToPreview('section-demo')}>
+                  <Field label="Section Title">
+                    <textarea
+                      value={form.demoTitle}
+                      onChange={e => set('demoTitle', e.target.value)}
+                      rows={2}
+                      className="w-full px-3 py-2.5 bg-white border border-orange-100 rounded-xl text-sm text-gray-800 focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-100 transition resize-none"
+                    />
+                  </Field>
+                  <ImageField label="Demo Banner Image" value={form.demoImageUrl} onChange={v => set('demoImageUrl', v)} />
+                  <div className="space-y-2">
+                    {form.demoButtons.map((btn, bi) => (
+                      <div key={btn.id} className="flex gap-2 items-center">
+                        <span className="text-xs text-gray-400 w-4 shrink-0">{bi + 1}.</span>
+                        <input
+                          value={btn.label}
+                          onChange={e => updateDemoBtn(btn.id, { label: e.target.value })}
+                          placeholder="Button label"
+                          className="flex-1 px-3 py-2 bg-white border border-orange-100 rounded-xl text-sm text-gray-800 focus:outline-none focus:border-orange-400 transition"
+                        />
+                        <input
+                          value={btn.url}
+                          onChange={e => updateDemoBtn(btn.id, { url: e.target.value })}
+                          placeholder="URL"
+                          className="flex-1 px-3 py-2 bg-white border border-orange-100 rounded-xl text-sm text-gray-800 focus:outline-none focus:border-orange-400 transition"
+                        />
+                        <button onClick={() => removeDemoBtn(btn.id)} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition">
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                  <button onClick={addDemoBtn} className="flex items-center gap-2 text-xs font-semibold text-orange-700 hover:text-orange-800 hover:bg-orange-50 px-2 py-1.5 rounded-xl transition">
+                    <Plus size={13} /> Add Button
+                  </button>
+                </Section>
+              </div>
 
               {/* Footer */}
-              <Section title="Footer" icon="📝" color="indigo" defaultOpen={false}>
-                <Field label="Footer Text">
-                  <Input value={form.footerText} onChange={v => set('footerText', v)} placeholder="Bring Innovation to Human Resource Management !!!" />
-                </Field>
-              </Section>
+              <div id="form-section-footer">
+                <Section title="Footer" icon="📝" color="indigo" onActive={() => scrollToPreview('section-footer')} defaultOpen={false}>
+                  <Field label="Footer Text">
+                    <Input value={form.footerText} onChange={v => set('footerText', v)} placeholder="Bring Innovation to Human Resource Management !!!" />
+                  </Field>
+                </Section>
+              </div>
             </> /* end release sections */}
           </div>
 
