@@ -112,8 +112,8 @@ export function generateEmailHTML(data: FormData): string {
     ? `<tr><td style="padding:16px 40px;"><table width="100%" cellpadding="0" cellspacing="0"><tr><td style="border:2px solid #ffffff;border-radius:50px;text-align:center;background:rgba(255,255,255,0.06);"><a href="${data.highlightVideoUrl}" style="display:block;padding:10px 16px;color:#ffffff;font-size:14px;font-weight:600;text-decoration:none;font-family:'Inter',sans-serif;">&#127916; Watch the Video</a></td></tr></table></td></tr>`
     : '';
 
-  const renderFixedImageRow = (src: string, alt: string): string =>
-    `<tr><td align="center" width="100%" style="line-height:0;padding:0;width:100%;max-width:${mailWidth}px;"><img src="${src}" alt="${alt}" width="100%" style="display:block;width:100%;max-width:${mailWidth}px;height:auto;border:0;outline:none;text-decoration:none;margin:0;padding:0;-ms-interpolation-mode:bicubic;"></td></tr>`;
+  const renderFixedImageRow = (src: string, alt: string, id?: string): string =>
+    `<tr ${id ? `id="${id}"` : ''}><td align="center" width="100%" style="line-height:0;padding:0;width:100%;max-width:${mailWidth}px;"><img src="${src}" alt="${alt}" width="100%" style="display:block;width:100%;max-width:${mailWidth}px;height:auto;border:0;outline:none;text-decoration:none;margin:0;padding:0;-ms-interpolation-mode:bicubic;"></td></tr>`;
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -124,15 +124,23 @@ export function generateEmailHTML(data: FormData): string {
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <script>
   window.addEventListener('scroll', () => {
-    const sections = ['section-branding', 'section-features', 'section-highlights', 'section-enhancements', 'section-hosted', 'section-demo', 'section-footer'];
+    const sections = ['section-branding', 'section-hero', 'section-features', 'section-highlights', 'section-enhancements', 'section-hosted', 'section-demo', 'section-footer'];
     let current = '';
-    for (const id of sections) {
+    let minDistance = 9999;
+    
+    sections.forEach(id => {
       const el = document.getElementById(id);
       if (el) {
         const rect = el.getBoundingClientRect();
-        if (rect.top <= 150) current = id;
+        // Check if the section is near the top of the viewport
+        const distance = Math.abs(rect.top - 100); 
+        if (rect.top < 250 && distance < minDistance) {
+          minDistance = distance;
+          current = id;
+        }
       }
-    }
+    });
+
     if (current) {
       window.parent.postMessage({ type: 'PREVIEW_SCROLL', sectionId: current }, '*');
     }
@@ -160,7 +168,7 @@ export function generateEmailHTML(data: FormData): string {
   </td></tr>
 
   <!-- Hero Image Area -->
-  ${data.heroImageUrl ? renderFixedImageRow(data.heroImageUrl, 'Hero') : ''}
+  ${data.heroImageUrl ? renderFixedImageRow(data.heroImageUrl, 'Hero', 'section-hero') : ''}
 
 
   <tr><td id="section-features" style="${innerBg}text-align:center;padding:8px 40px 16px;">
