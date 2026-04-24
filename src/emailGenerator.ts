@@ -111,7 +111,7 @@ export function generateEmailHTML(data: FormData): string {
     : '';
 
   const renderFixedImageRow = (src: string, alt: string): string =>
-    `<tr><td align="center" width="${mailWidth}" style="line-height:0;padding:0;width:${mailWidth}px;"><img src="${src}" alt="${alt}" width="${mailWidth}" style="display:block;width:${mailWidth}px;min-width:${mailWidth}px;max-width:${mailWidth}px;height:auto;border:0;outline:none;text-decoration:none;margin:0;padding:0;-ms-interpolation-mode:bicubic;"></td></tr>`;
+    `<tr><td align="center" width="100%" style="line-height:0;padding:0;width:100%;max-width:${mailWidth}px;"><img src="${src}" alt="${alt}" width="100%" style="display:block;width:100%;max-width:${mailWidth}px;height:auto;border:0;outline:none;text-decoration:none;margin:0;padding:0;-ms-interpolation-mode:bicubic;"></td></tr>`;
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -124,7 +124,7 @@ export function generateEmailHTML(data: FormData): string {
 <body style="margin:0;padding:0;background-color:#F0F1F5;" bgcolor="#F0F1F5">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="#F0F1F5" style="background-color:#F0F1F5;padding:40px 0;">
 <tr><td align="center">
-<table width="${mailWidth}" cellpadding="0" cellspacing="0" align="center" bgcolor="#050a1f" style="background-color:#050a1f;width:${mailWidth}px;min-width:${mailWidth}px;max-width:${mailWidth}px;margin:0 auto;font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" align="center" bgcolor="#050a1f" style="background-color:#050a1f;width:100%;max-width:${mailWidth}px;margin:0 auto;font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;">
 
   <!-- Top Branding Area -->
   <tr><td style="text-align:center;padding:40px 40px 0px;">

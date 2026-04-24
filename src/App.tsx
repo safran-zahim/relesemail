@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback } from 'react';
-import { Mail, Copy, Check, Download, Zap, Plus, Trash2 } from 'lucide-react';
+import { Mail, Copy, Check, Download, Zap, Plus, Trash2, Send } from 'lucide-react';
 import { Section, Field, Input, ListEditor, ImageField } from './components';
 import { generateEmailHTML } from './emailGenerator';
 import { generateWelcomeEmailHTML } from './welcomeGenerator';
@@ -121,6 +121,8 @@ export default function App() {
   const [form, setForm] = useState<FormData>(INITIAL);
   const [welcome, setWelcome] = useState<WelcomeFormData>(WELCOME_INITIAL);
   const [copied, setCopied] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [sendStatus, setSendStatus] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'form' | 'preview'>('form');
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
@@ -135,6 +137,10 @@ export default function App() {
   const previewFilename = template === 'release'
     ? `${form.productName || 'release'}-${form.version || 'email'}.html`
     : `welcome-${welcome.employeeName?.replace(/\s+/g, '-').toLowerCase() || 'new-member'}.html`;
+
+  const emailSubject = template === 'release'
+    ? `${form.productName || 'Release'} ${form.version || ''}`.trim()
+    : `Welcome ${welcome.employeeName || 'to the Team'}`;
 
   const handleCopy = async () => {
     try {
@@ -174,6 +180,36 @@ export default function App() {
     a.href = URL.createObjectURL(blob);
     a.download = previewFilename;
     a.click();
+  };
+
+  const handleSendTestMail = async () => {
+    setSending(true);
+    setSendStatus(null);
+
+    try {
+      const response = await fetch('/api/send-test-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          subject: `${emailSubject} - Test Mail`,
+          htmlBody: emailHTML,
+        }),
+      });
+
+      const result = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to send test mail');
+      }
+
+      setSendStatus('Test mail sent to your Gmail inbox.');
+    } catch (error) {
+      setSendStatus(error instanceof Error ? error.message : 'Failed to send test mail');
+    } finally {
+      setSending(false);
+    }
   };
 
   // Feature Categories helpers
@@ -216,6 +252,14 @@ export default function App() {
             ))}
           </div>
           <div className="ml-auto flex items-center gap-3">
+            <button
+              onClick={handleSendTestMail}
+              disabled={sending}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-600 text-white shadow-md hover:bg-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed transition-all"
+            >
+              <Send size={14} />
+              {sending ? 'Sending...' : 'Send Test Mail'}
+            </button>
             <button
               onClick={handleCopy}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all border shadow-sm ${copied
@@ -469,6 +513,11 @@ export default function App() {
 
           {/* ── RIGHT: PREVIEW PANEL ── */}
           <div className={`lg:sticky lg:top-24 ${activeTab === 'form' ? 'hidden lg:block' : ''}`}>
+            {sendStatus ? (
+              <div className="mb-3 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-800">
+                {sendStatus}
+              </div>
+            ) : null}
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
                 <Mail size={16} className="text-indigo-500" />
