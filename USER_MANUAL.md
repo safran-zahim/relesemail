@@ -41,4 +41,4 @@ On the right side of the screen, you'll see a **Live Email Preview**. This shows
 - **Send Test**: Send a test email to yourself to verify the look and feel (requires backend configuration).
 
 > [!IMPORTANT]
-> Keep an eye on the **Payload Size** indicator. Most email clients (like Gmail) will clip emails that are larger than 102KB. Our tool tracks the size and warns you if you're approaching the limit.
+> Keep an eye on the **Payload Size** indicator. While most email clients (like Gmail) will clip emails that are larger than 102KB, our system allows for a maximum payload of **4MB**. The tool tracks the size and warns you if you're approaching this limit.
