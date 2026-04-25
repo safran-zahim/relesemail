@@ -14,59 +14,13 @@ const g = generateId;
 
 const DEFAULT_CATEGORIES: FeatureCategory[] = [
   {
-    id: g(), icon: '⭐', name: 'Performance Core',
+    id: g(), icon: '⭐', name: 'Sample Category',
     items: [
-      { id: g(), text: 'Intelligent Default Selection And Ordering Of Employee & Self Reviews' },
-      { id: g(), text: 'Display Review Status Indicators In Review Drop-Down' },
-      { id: g(), text: 'Employee-Level Review Urgency Indicators In Performance Reviews List' },
-      { id: g(), text: 'Dynamic Layout Switch For Manager Review' },
-    ],
-  },
-  {
-    id: g(), icon: '📊', name: 'Reports & Analytics',
-    items: [
-      { id: g(), text: 'Additional Export Option: XLSX - Phase 1' },
-    ],
-  },
-  {
-    id: g(), icon: '🗓️', name: 'Attendance',
-    items: [
-      { id: g(), text: 'Exception Rule: Roster Based Round Off Variance' },
-      { id: g(), text: 'Roster Based Round Off Recalculation' },
-      { id: g(), text: 'Punch In And Out Edit Restriction Based On Shifts' },
-      { id: g(), text: 'Auto Populate Missing Attendance Records' },
-    ],
-  },
-  {
-    id: g(), icon: '👥', name: 'Roster',
-    items: [
-      { id: g(), text: 'Compact Shift Display In Monthly View' },
-      { id: g(), text: 'Control Shift Creation/ Modification Using Shift Types' },
-      { id: g(), text: 'Copy Weekly Schedule – Enforce Shift Creation Rules And Role-Based Behavior' },
-      { id: g(), text: 'When Copying Shifts If There Are Conflicts - Create Empty Shifts' },
-      { id: g(), text: 'Copy Weekly Schedule As Unassigned Shifts' },
-      { id: g(), text: 'Group Shifts By Type Within Shift Groups On The Monthly Roster' },
-      { id: g(), text: 'Move A Shift To Another Day Via Drag & Drop (Shift Group - Month View)' },
-      { id: g(), text: 'Move Shift To A Different Shift Type Within The Same Shift Group' },
-      { id: g(), text: 'Audit Trail For Shift Type Management' },
-    ],
-  },
-  {
-    id: g(), icon: '🤖', name: 'Citra',
-    items: [
-      { id: g(), text: 'Citra AI MS Teams Compatibility Fixes' },
-      { id: g(), text: 'Citra AI UI Revamping' },
-    ],
-  },
-  {
-    id: g(), icon: '📈', name: 'Power BI',
-    items: [
-      { id: g(), text: 'Introduction of the Organizational Hierarchy View' },
-      { id: g(), text: 'Improvements to the Job State Change View' },
+      { id: g(), text: 'Sample feature improvement or update description' },
     ],
   },
 ].map((cat, i) => {
-  const DEFAULT_ICON_NAMES = ['icon_05', 'icon_04', 'icon_01', 'icon_02', 'icon_03', 'icon_06'];
+  const DEFAULT_ICON_NAMES = ['icon_01'];
   return {
     ...cat,
     iconName: DEFAULT_ICON_NAMES[i % DEFAULT_ICON_NAMES.length]
