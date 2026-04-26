@@ -228,6 +228,7 @@ export default function App() {
     setSending(true);
     setSendStatus(null);
     try {
+      if (sendPayload.bytes > 4000000) throw new Error('Email too large (Limit 4MB)');
       const response = await fetch('/api/send-test-email', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: sendPayload.payload });
       if (!response.ok) throw new Error('Failed');
       setSendStatus('Sent!');

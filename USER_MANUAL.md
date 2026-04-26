@@ -159,9 +159,8 @@ Top bar controls include:
 Payload rules:
 
 1. The app enforces a maximum payload close to 4 MB.
-2. Large emails still attempt to send, but the payload indicator turns red as a warning.
-3. Email clients may still clip or reject very large messages, especially Gmail.
-4. If payload grows too much, reduce image size and number of large assets.
+2. Large emails may still be clipped by email clients (especially Gmail).
+3. If payload grows too much, reduce image size and number of large assets.
 
 ## 7. Export and Delivery Workflow
 
