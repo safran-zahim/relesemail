@@ -7,7 +7,7 @@ A professional email generator for product releases and internal communications.
 - **Release Email Template**: Create stunning release announcement emails with feature categories, highlights, and hosted environment details.
 - **Live Preview**: See your changes in real-time with a built-in iframe preview.
 - **Copy & Download**: Copy the generated HTML to your clipboard or download it as an `.html` file.
-- **Payload Tracking**: Monitor the size of your email to ensure it stays within common email client limits (e.g., 700KB).
+- **Payload Tracking**: Monitor the size of your email with a warning indicator for large payloads; oversized emails still attempt to send, but email clients may clip or reject them.
 - **Smooth Navigation**: Synchronized scrolling between the editor and the preview.
 
 ## Tech Stack
