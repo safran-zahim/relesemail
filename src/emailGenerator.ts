@@ -9,7 +9,7 @@ function getToggleSwitchIcon(iconName?: string): string {
   return '';
 }
 
-// ── Main generator ─────────────────────────────────────────────────────────
+// ── Main generator ──────────────────────────────────────────────────
 export function generateEmailHTML(data: FormData): string {
   const brand = data.brandColor || '#f97316';
   const company = data.companyName || 'OrangeHRM';
