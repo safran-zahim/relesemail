@@ -66,6 +66,10 @@ const INITIAL: FormData = {
   demoImageUrl: '',
   demoButtons: DEFAULT_BUTTONS,
   footerText: 'Bring Innovation to Human Resource Management !!!',
+  footerGradientColor1: '#f97316',
+  footerGradientColor2: '#f97316',
+  footerGradientOpacity1: 13,
+  footerGradientOpacity2: 27,
 };
 
 function formatBytes(bytes: number): string {
@@ -391,6 +395,24 @@ export default function App() {
                 <div id="form-section-footer">
                   <Section title="Footer" icon="📝" color="indigo">
                     <Field label="Footer Text"><Input value={form.footerText} onChange={v => set('footerText', v)} /></Field>
+                    <Field label="Gradient Color 1">
+                      <div className="flex gap-2 items-center">
+                        <input type="color" value={form.footerGradientColor1} onChange={e => set('footerGradientColor1', e.target.value)} className="h-10 w-14 rounded-xl border border-indigo-100 cursor-pointer p-0.5" />
+                        <Input value={form.footerGradientColor1} onChange={v => set('footerGradientColor1', v)} />
+                      </div>
+                    </Field>
+                    <Field label={`Opacity 1: ${form.footerGradientOpacity1}%`}>
+                      <input type="range" min="0" max="100" value={form.footerGradientOpacity1} onChange={e => set('footerGradientOpacity1', parseInt(e.target.value))} className="w-full h-2 bg-indigo-100 rounded-lg appearance-none cursor-pointer" />
+                    </Field>
+                    <Field label="Gradient Color 2">
+                      <div className="flex gap-2 items-center">
+                        <input type="color" value={form.footerGradientColor2} onChange={e => set('footerGradientColor2', e.target.value)} className="h-10 w-14 rounded-xl border border-indigo-100 cursor-pointer p-0.5" />
+                        <Input value={form.footerGradientColor2} onChange={v => set('footerGradientColor2', v)} />
+                      </div>
+                    </Field>
+                    <Field label={`Opacity 2: ${form.footerGradientOpacity2}%`}>
+                      <input type="range" min="0" max="100" value={form.footerGradientOpacity2} onChange={e => set('footerGradientOpacity2', parseInt(e.target.value))} className="w-full h-2 bg-indigo-100 rounded-lg appearance-none cursor-pointer" />
+                    </Field>
                   </Section>
                 </div>
               </div>

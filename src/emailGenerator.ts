@@ -1,6 +1,12 @@
 import type { FormData } from './types';
 import { featureIcons } from './icons';
 
+// ── Utility Functions ──────────────────────────────────────────────────────
+function percentToHex(percent: number): string {
+  const value = Math.round((percent / 100) * 255);
+  return value.toString(16).padStart(2, '0').toUpperCase();
+}
+
 // ── Category Icons ─────────────────────────────────────────────────────────
 function getToggleSwitchIcon(iconName?: string): string {
   if (iconName && featureIcons[iconName]) {
@@ -24,9 +30,11 @@ export function generateEmailHTML(data: FormData): string {
 
 
   const innerBg = 'background-color:#050a1f;';
+  const opacity1Hex = percentToHex(data.footerGradientOpacity1 || 13);
+  const opacity2Hex = percentToHex(data.footerGradientOpacity2 || 27);
   const footerBg = (data.footerGradient && data.footerGradient.trim())
     ? data.footerGradient
-    : `linear-gradient(135deg,${brand}22,${brand}44)`;
+    : `linear-gradient(135deg,${data.footerGradientColor1 || brand}${opacity1Hex},${data.footerGradientColor2 || brand}${opacity2Hex})`;
 
 
   // ── Feature category glass cards ──────────────────────────────────────────

@@ -55,8 +55,13 @@ export interface FormData {
   demoImageUrl: string;
   demoButtons: CTAButton[];
   footerText: string;
+  // Footer gradient colors and opacity
+  footerGradientColor1: string;
+  footerGradientColor2: string;
+  footerGradientOpacity1: number; // 0-100 percentage
+  footerGradientOpacity2: number; // 0-100 percentage
   // Optional CSS background for the footer (e.g. "linear-gradient(135deg,#ff000022,#00ff0044)").
-  // If omitted, the generator will build a gradient from `brandColor`.
+  // If omitted, the generator will build a gradient from the footer gradient colors.
   footerGradient?: string;
 }
 
