@@ -2,9 +2,19 @@ import type { FormData } from './types';
 import { featureIcons } from './icons';
 
 // ── Utility Functions ──────────────────────────────────────────────────────
-function percentToHex(percent: number): string {
-  const value = Math.round((percent / 100) * 255);
-  return value.toString(16).padStart(2, '0').toUpperCase();
+function hexToRgba(hex: string, opacityPercent: number): string {
+  // Remove # if present
+  const cleanHex = hex.replace('#', '');
+  
+  // Parse hex to RGB
+  const r = parseInt(cleanHex.substring(0, 2), 16);
+  const g = parseInt(cleanHex.substring(2, 4), 16);
+  const b = parseInt(cleanHex.substring(4, 6), 16);
+  
+  // Convert opacity percentage to 0-1 scale
+  const alpha = opacityPercent / 100;
+  
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
 // ── Category Icons ─────────────────────────────────────────────────────────
@@ -30,11 +40,16 @@ export function generateEmailHTML(data: FormData): string {
 
 
   const innerBg = 'background-color:#050a1f;';
-  const opacity1Hex = percentToHex(data.footerGradientOpacity1 || 13);
-  const opacity2Hex = percentToHex(data.footerGradientOpacity2 || 27);
-  const footerBg = (data.footerGradient && data.footerGradient.trim())
-    ? data.footerGradient
-    : `linear-gradient(135deg,${data.footerGradientColor1 || brand}${opacity1Hex},${data.footerGradientColor2 || brand}${opacity2Hex})`;
+  const opacity1 = data.footerGradientOpacity1 || 13;
+  const opacity2 = data.footerGradientOpacity2 || 27;
+  
+  let footerBg = '#050a1f';
+  if (data.footerGradient && data.footerGradient.trim()) {
+    footerBg = data.footerGradient;
+  } else if (opacity1 > 1 || opacity2 > 1) {
+    // Only show gradient if at least one color has opacity > 1%
+    footerBg = `linear-gradient(135deg,${hexToRgba(data.footerGradientColor1 || brand, opacity1)},${hexToRgba(data.footerGradientColor2 || brand, opacity2)})`;
+  }
 
 
   // ── Feature category glass cards ──────────────────────────────────────────
