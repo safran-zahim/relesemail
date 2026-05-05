@@ -15,7 +15,7 @@ export interface FeatureCategory {
 export interface CTAButton {
   id: string;
   label: string;
-  url: string;
+  buttonUrl: string;
 }
 
 export interface FormData {
@@ -44,7 +44,7 @@ export interface FormData {
   hostedEnvEnabled: boolean;
   hostedEnvDesc: string;
   hostedEnvImageUrl: string;
-  hostedUrl: string;
+  hostedEnvUrl: string;
   adminUser: string;
   adminPass: string;
   sysadminUser: string;

@@ -28,10 +28,10 @@ const DEFAULT_CATEGORIES: FeatureCategory[] = [
 });
 
 const DEFAULT_BUTTONS: CTAButton[] = [
-  { id: g(), label: 'Demo Video', url: '' },
-  { id: g(), label: 'Presentation Slide Deck', url: '' },
-  { id: g(), label: 'Release Notes & Build Information', url: '' },
-  { id: g(), label: 'Schema Changes in 8.1', url: '' },
+  { id: g(), label: 'Demo Video', buttonUrl: '' },
+  { id: g(), label: 'Presentation Slide Deck', buttonUrl: '' },
+  { id: g(), label: 'Release Notes & Build Information', buttonUrl: '' },
+  { id: g(), label: 'Schema Changes in 8.1', buttonUrl: '' },
 ];
 
 const INITIAL: FormData = {
@@ -56,7 +56,7 @@ const INITIAL: FormData = {
   hostedEnvEnabled: true,
   hostedEnvDesc: "If you would like to play around with the new features, please feel free to use the below system. However, please ensure you don't change the default passwords of admin accounts.",
   hostedEnvImageUrl: '',
-  hostedUrl: 'https://81-tag-kord.orangehrm.com/',
+  hostedEnvUrl: 'https://81-tag-kord.orangehrm.com/',
   adminUser: 'admin',
   adminPass: 'BestSystemEver100%',
   sysadminUser: '_ohrmSysAdmin_',
@@ -247,7 +247,7 @@ export default function App() {
   const removeCategory = (id: string) => set('featureCategories', form.featureCategories.filter(c => c.id !== id));
   const updateCategory = (id: string, patch: Partial<FeatureCategory>) => set('featureCategories', form.featureCategories.map(c => c.id === id ? { ...c, ...patch } : c));
 
-  const addDemoBtn = () => set('demoButtons', [...form.demoButtons, { id: g(), label: '', url: '' }]);
+  const addDemoBtn = () => set('demoButtons', [...form.demoButtons, { id: g(), label: '', buttonUrl: '' }]);
   const removeDemoBtn = (id: string) => set('demoButtons', form.demoButtons.filter(b => b.id !== id));
   const updateDemoBtn = (id: string, patch: Partial<CTAButton>) => set('demoButtons', form.demoButtons.map(b => b.id === id ? { ...b, ...patch } : b));
 
@@ -368,7 +368,7 @@ export default function App() {
                       <div className="space-y-3">
                         <Field label="Description"><textarea value={form.hostedEnvDesc} onChange={e => set('hostedEnvDesc', e.target.value)} rows={2} className="w-full px-3 py-2.5 bg-white border border-sky-100 rounded-xl text-sm focus:outline-none transition resize-none" /></Field>
                         <ImageField label="Env Image" value={form.hostedEnvImageUrl} onChange={v => set('hostedEnvImageUrl', v)} />
-                        <Field label="Env URL"><Input value={form.hostedUrl} onChange={v => set('hostedUrl', v)} /></Field>
+                        <Field label="Hosted Env URL"><Input value={form.hostedEnvUrl} onChange={v => set('hostedEnvUrl', v)} /></Field>
                       </div>
                     )}
                   </Section>
@@ -383,7 +383,7 @@ export default function App() {
                         <div key={btn.id} className="flex gap-2 items-center">
                           <span className="text-xs text-gray-400 w-4">{bi + 1}.</span>
                           <input value={btn.label} onChange={e => updateDemoBtn(btn.id, { label: e.target.value })} placeholder="Label" className="flex-1 px-3 py-2 bg-white border border-orange-100 rounded-xl text-sm focus:outline-none" />
-                          <input value={btn.url} onChange={e => updateDemoBtn(btn.id, { url: e.target.value })} placeholder="URL" className="flex-1 px-3 py-2 bg-white border border-orange-100 rounded-xl text-sm focus:outline-none" />
+                          <input value={btn.buttonUrl} onChange={e => updateDemoBtn(btn.id, { buttonUrl: e.target.value })} placeholder="Button URL" className="flex-1 px-3 py-2 bg-white border border-orange-100 rounded-xl text-sm focus:outline-none" />
                           <button onClick={() => removeDemoBtn(btn.id)} className="p-1.5 text-gray-400 hover:text-red-500 transition-colors"><Trash2 size={13} /></button>
                         </div>
                       ))}

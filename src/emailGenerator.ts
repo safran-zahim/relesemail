@@ -114,7 +114,7 @@ export function generateEmailHTML(data: FormData): string {
     .map(b => `<tr><td style="padding:10px 20px;">
       <table width="100%" cellpadding="0" cellspacing="0">
         <tr><td style="border:2px solid #ffffff;border-radius:50px;text-align:center;background:rgba(255,255,255,0.06);">
-          <a href="${b.url || '#'}" style="display:block;padding:10px 16px;color:#ffffff;font-size:14px;font-weight:600;text-decoration:none;font-family:'Inter',sans-serif;">${b.label}</a>
+          <a href="${b.buttonUrl || '#'}" style="display:block;padding:10px 16px;color:#ffffff;font-size:14px;font-weight:600;text-decoration:none;font-family:'Inter',sans-serif;">${b.label}</a>
         </td></tr>
       </table>
     </td></tr>`).join('');
@@ -193,7 +193,7 @@ export function generateEmailHTML(data: FormData): string {
   <tr><td style="${innerBg}padding:20px 40px;">
     <table width="100%" cellpadding="0" cellspacing="0" style="background:rgba(13,17,33,0.7);">
       <tr><td style="padding:18px 20px;">
-        ${data.hostedUrl ? `<p style="margin:0 0 12px;text-align:center;font-size:15px;font-family:'Inter',sans-serif;"><span style="color:${brand};">URL: </span><a href="${data.hostedUrl}" style="color:${brand};font-size:15px;text-decoration:none;">${data.hostedUrl}</a></p>` : ''}
+        ${data.hostedEnvUrl ? `<p style="margin:0 0 12px;text-align:center;font-size:15px;font-family:'Inter',sans-serif;"><span style="color:${brand};">URL: </span><a href="${data.hostedEnvUrl}" style="color:${brand};font-size:15px;text-decoration:none;">${data.hostedEnvUrl}</a></p>` : ''}
         ${data.adminUser ? `<p style="margin:8px 0;text-align:center;font-size:15px;color:#ffffff;font-family:'Inter',sans-serif;">Admin Account: UN: ${data.adminUser} | PW: ${data.adminPass}</p>` : ''}
         ${data.sysadminUser ? `<p style="margin:8px 0;text-align:center;font-size:15px;color:#ffffff;font-family:'Inter',sans-serif;">Sysadmin Account: UN: ${data.sysadminUser} | PW: ${data.sysadminPass}</p>` : ''}
         ${data.generalPass ? `<p style="margin:8px 0 0;text-align:center;font-size:15px;color:#ffffff;font-family:'Inter',sans-serif;">For any other user, use this password : PW: ${data.generalPass}</p>` : ''}
