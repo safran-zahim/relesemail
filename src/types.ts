@@ -8,6 +8,7 @@ export interface FeatureCategory {
   id: string;
   icon: string;
   iconName?: string;
+  customIconDataUrl?: string;
   name: string;
   items: ListItem[];
 }

@@ -18,7 +18,10 @@ function hexToRgba(hex: string, opacityPercent: number): string {
 }
 
 // ── Category Icons ─────────────────────────────────────────────────────────
-function getToggleSwitchIcon(iconName?: string): string {
+function getToggleSwitchIcon(iconName?: string, customIconDataUrl?: string): string {
+  if (customIconDataUrl) {
+    return `<img src="${customIconDataUrl}" height="32" alt="icon" style="display:inline-block;height:32px;width:auto;vertical-align:middle;margin-right:12px;border:0;">`;
+  }
   if (iconName && featureIcons[iconName]) {
     return `<img src="${featureIcons[iconName]}" height="32" alt="icon" style="display:inline-block;height:32px;width:auto;vertical-align:middle;margin-right:12px;border:0;">`;
   }
@@ -78,11 +81,11 @@ export function generateEmailHTML(data: FormData): string {
             <table width="100%" cellpadding="0" cellspacing="0">
               <tr>
                 <td valign="middle" style="padding-bottom:8px;">
-                  ${getToggleSwitchIcon(cat.iconName)}
+                  ${getToggleSwitchIcon(cat.iconName, cat.customIconDataUrl)}
                   <span style="color:#ffffff;font-size:18px;font-weight:700;line-height:1;vertical-align:top;letter-spacing:-0.02em;font-family:'Inter',sans-serif;">${cat.name}</span>
                 </td>
               </tr>
-              <tr><td style="padding-left:${(cat.iconName && featureIcons[cat.iconName]) ? '44px' : '0px'};">
+              <tr><td style="padding-left:${(cat.customIconDataUrl || (cat.iconName && featureIcons[cat.iconName])) ? '44px' : '0px'};">
                 <table width="100%" cellpadding="0" cellspacing="0">
                   ${itemsHTML}
                 </table>

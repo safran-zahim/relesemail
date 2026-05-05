@@ -12,6 +12,17 @@ type TemplateType = 'release' | 'welcome';
 
 const g = generateId;
 
+const FEATURE_ICON_KEYS = Array.from({ length: 14 }, (_, i) => `icon_${String(i + 1).padStart(2, '0')}`);
+
+function readFileAsDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ''));
+    reader.onerror = () => reject(new Error('Failed to read file'));
+    reader.readAsDataURL(file);
+  });
+}
+
 const DEFAULT_CATEGORIES: FeatureCategory[] = [
   {
     id: g(), icon: '⭐', name: 'Sample Category',
@@ -87,6 +98,7 @@ export default function App() {
   const [sending, setSending] = useState(false);
   const [sendStatus, setSendStatus] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'form' | 'preview'>('form');
+  const [iconPickerCategoryId, setIconPickerCategoryId] = useState<string | null>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   const set = useCallback(<K extends keyof FormData>(key: K, value: FormData[K]) => {
@@ -246,6 +258,16 @@ export default function App() {
   const addCategory = () => set('featureCategories', [...form.featureCategories, { id: g(), icon: '⭐', name: '', iconName: 'icon_01', items: [{ id: g(), text: '' }] }]);
   const removeCategory = (id: string) => set('featureCategories', form.featureCategories.filter(c => c.id !== id));
   const updateCategory = (id: string, patch: Partial<FeatureCategory>) => set('featureCategories', form.featureCategories.map(c => c.id === id ? { ...c, ...patch } : c));
+  const uploadCategoryIcon = async (id: string, file?: File) => {
+    if (!file) return;
+    const dataUrl = await readFileAsDataUrl(file);
+    updateCategory(id, { customIconDataUrl: dataUrl });
+  };
+  const openIconPicker = (id: string) => setIconPickerCategoryId(id);
+  const closeIconPicker = () => setIconPickerCategoryId(null);
+  const selectedIconCategory = iconPickerCategoryId
+    ? form.featureCategories.find(c => c.id === iconPickerCategoryId) || null
+    : null;
 
   const addDemoBtn = () => set('demoButtons', [...form.demoButtons, { id: g(), label: '', buttonUrl: '' }]);
   const removeDemoBtn = (id: string) => set('demoButtons', form.demoButtons.filter(b => b.id !== id));
@@ -321,16 +343,22 @@ export default function App() {
                       {form.featureCategories.map((cat) => (
                         <div key={cat.id} className="border border-amber-100 rounded-2xl bg-amber-50/40 p-3 space-y-2">
                           <div className="flex items-center gap-2">
-                            <select 
-                              value={cat.iconName} 
-                              onChange={e => updateCategory(cat.id, { iconName: e.target.value })}
-                              className="px-2 py-2 bg-white border border-amber-200 rounded-xl text-sm focus:outline-none cursor-pointer"
+                            <button
+                              type="button"
+                              onClick={() => openIconPicker(cat.id)}
+                              className="relative h-12 w-12 rounded-xl border border-amber-300 bg-white flex items-center justify-center overflow-hidden hover:bg-amber-50 transition-colors shrink-0"
+                              title="Choose or upload icon"
+                              aria-label="Choose or upload icon"
                             >
-                              {Array.from({ length: 14 }).map((_, i) => {
-                                const name = `icon_${String(i + 1).padStart(2, '0')}`;
-                                return <option key={name} value={name}>Icon {i + 1}</option>;
-                              })}
-                            </select>
+                              {cat.customIconDataUrl ? (
+                                <img src={cat.customIconDataUrl} alt="custom icon" className="h-9 w-9 object-contain" />
+                              ) : cat.iconName && featureIcons[cat.iconName] ? (
+                                <img src={featureIcons[cat.iconName]} alt="selected icon" className="h-9 w-9 object-contain" />
+                              ) : (
+                                <span className="text-amber-600 text-xs font-semibold">Icon</span>
+                              )}
+                              <span className="absolute -bottom-1 -right-1 h-5 w-5 rounded-full bg-amber-500 text-white text-[10px] font-bold flex items-center justify-center shadow-sm">+</span>
+                            </button>
                             <input value={cat.name} onChange={e => updateCategory(cat.id, { name: e.target.value })} placeholder="Category name" className="flex-1 px-3 py-2 bg-white border border-amber-200 rounded-xl text-sm focus:outline-none" />
                             <button onClick={() => removeCategory(cat.id)} className="p-1.5 text-gray-400 hover:text-red-500 transition-colors"><Trash2 size={14} /></button>
                           </div>
@@ -438,6 +466,87 @@ export default function App() {
           </div>
         </div>
       </main>
+
+      {selectedIconCategory && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4" onClick={closeIconPicker}>
+          <div
+            className="w-full max-w-3xl rounded-3xl bg-white shadow-2xl border border-amber-100 overflow-hidden"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between px-5 py-4 border-b border-amber-100 bg-amber-50/60">
+              <div>
+                <h3 className="text-lg font-bold text-gray-900">Choose Feature Icon</h3>
+                <p className="text-xs text-gray-500">Default icons are shown first. You can also upload a local image.</p>
+              </div>
+              <button onClick={closeIconPicker} className="px-3 py-1.5 rounded-lg text-sm font-semibold text-gray-600 hover:bg-white border border-amber-100">Close</button>
+            </div>
+
+            <div className="p-5 space-y-5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-semibold text-gray-800">Default icons</p>
+                  <p className="text-xs text-gray-500">Click an icon to apply it to {selectedIconCategory.name || 'this category'}.</p>
+                </div>
+                <label className="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-amber-200 bg-amber-50 text-amber-800 text-xs font-semibold cursor-pointer hover:bg-amber-100 transition-colors">
+                  <Plus size={14} /> Upload icon
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={e => {
+                      const file = e.target.files?.[0];
+                      void uploadCategoryIcon(selectedIconCategory.id, file);
+                      e.currentTarget.value = '';
+                    }}
+                  />
+                </label>
+              </div>
+
+              <div className="grid grid-cols-4 sm:grid-cols-7 gap-3">
+                {FEATURE_ICON_KEYS.map(iconKey => {
+                  const active = selectedIconCategory.iconName === iconKey && !selectedIconCategory.customIconDataUrl;
+                  return (
+                    <button
+                      key={iconKey}
+                      type="button"
+                      onClick={() => {
+                        updateCategory(selectedIconCategory.id, { iconName: iconKey, customIconDataUrl: undefined });
+                        closeIconPicker();
+                      }}
+                      className={`group flex flex-col items-center gap-2 rounded-2xl border p-3 transition-all ${active ? 'border-amber-500 bg-amber-50 shadow-sm' : 'border-amber-100 bg-white hover:border-amber-300 hover:bg-amber-50/60'}`}
+                    >
+                      <img src={featureIcons[iconKey]} alt="" className="h-8 w-8 object-contain" />
+                    </button>
+                  );
+                })}
+              </div>
+
+              {selectedIconCategory.customIconDataUrl && (
+                <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="h-12 w-12 rounded-xl bg-white border border-amber-200 flex items-center justify-center overflow-hidden">
+                      <img src={selectedIconCategory.customIconDataUrl} alt="custom icon" className="h-10 w-10 object-contain" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-gray-900">Custom icon selected</p>
+                      <p className="text-xs text-gray-500">This image came from local storage.</p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      updateCategory(selectedIconCategory.id, { customIconDataUrl: undefined, iconName: 'icon_01' });
+                    }}
+                    className="px-3 py-2 rounded-xl text-xs font-semibold text-gray-700 border border-amber-200 bg-white hover:bg-amber-100"
+                  >
+                    Clear custom icon
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
