@@ -24,6 +24,9 @@ export function generateEmailHTML(data: FormData): string {
 
 
   const innerBg = 'background-color:#050a1f;';
+  const footerBg = (data.footerGradient && data.footerGradient.trim())
+    ? data.footerGradient
+    : `linear-gradient(135deg,${brand}22,${brand}44)`;
 
 
   // ── Feature category glass cards ──────────────────────────────────────────
@@ -53,7 +56,7 @@ export function generateEmailHTML(data: FormData): string {
               <tr>
                 <td valign="middle" style="padding-bottom:8px;">
                   ${getToggleSwitchIcon(cat.iconName)}
-                  <span style="color:#ffffff;font-size:24px;font-weight:700;line-height:1;vertical-align:top;letter-spacing:-0.02em;font-family:'Inter',sans-serif;">${cat.name}</span>
+                  <span style="color:#ffffff;font-size:18px;font-weight:700;line-height:1;vertical-align:top;letter-spacing:-0.02em;font-family:'Inter',sans-serif;">${cat.name}</span>
                 </td>
               </tr>
               <tr><td style="padding-left:${(cat.iconName && featureIcons[cat.iconName]) ? '44px' : '0px'};">
@@ -197,7 +200,7 @@ export function generateEmailHTML(data: FormData): string {
   ${data.demoImageUrl ? renderFixedImageRow(data.demoImageUrl, 'Demo') : ''}
   <tr><td style="${innerBg}padding:8px 0 24px;"><table width="100%" cellpadding="0" cellspacing="0">${demoButtonsHTML}</table></td></tr>` : ''}
 
-  <tr><td style="background:linear-gradient(135deg,${brand}22,${brand}44);border-top:1px solid rgba(255,255,255,0.1);text-align:center;padding:22px 40px;">
+  <tr><td style="background:${footerBg};border-top:1px solid rgba(255,255,255,0.1);text-align:center;padding:22px 40px;">
     <p style="margin:0;color:rgba(255,255,255,0.9);font-size:14px;font-weight:600;">${data.footerText || 'Bring Innovation to Human Resource Management !!!'}</p>
   </td></tr>
 

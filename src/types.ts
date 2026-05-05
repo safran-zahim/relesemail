@@ -55,6 +55,9 @@ export interface FormData {
   demoImageUrl: string;
   demoButtons: CTAButton[];
   footerText: string;
+  // Optional CSS background for the footer (e.g. "linear-gradient(135deg,#ff000022,#00ff0044)").
+  // If omitted, the generator will build a gradient from `brandColor`.
+  footerGradient?: string;
 }
 
 export function generateId(): string {
