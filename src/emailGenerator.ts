@@ -46,12 +46,13 @@ export function generateEmailHTML(data: FormData): string {
   const opacity1 = data.footerGradientOpacity1 || 13;
   const opacity2 = data.footerGradientOpacity2 || 27;
   
-  let footerBg = '#050a1f';
+  let footerBgStyle = 'background-color:#050a1f;';
   if (data.footerGradient && data.footerGradient.trim()) {
-    footerBg = data.footerGradient;
+    footerBgStyle = `background:${data.footerGradient};background-color:#050a1f;`;
   } else if (opacity1 > 1 || opacity2 > 1) {
     // Only show gradient if at least one color has opacity > 1%
-    footerBg = `linear-gradient(135deg,${hexToRgba(data.footerGradientColor1 || brand, opacity1)},${hexToRgba(data.footerGradientColor2 || brand, opacity2)})`;
+    const gradient = `linear-gradient(135deg,${hexToRgba(data.footerGradientColor1 || brand, opacity1)},${hexToRgba(data.footerGradientColor2 || brand, opacity2)})`;
+    footerBgStyle = `background:${gradient};background-color:#050a1f;`;
   }
 
 
@@ -226,7 +227,7 @@ export function generateEmailHTML(data: FormData): string {
   ${data.demoImageUrl ? renderFixedImageRow(data.demoImageUrl, 'Demo') : ''}
   <tr><td style="${innerBg}padding:8px 0 24px;"><table width="100%" cellpadding="0" cellspacing="0">${demoButtonsHTML}</table></td></tr>` : ''}
 
-  <tr><td style="background:${footerBg};border-top:1px solid rgba(255,255,255,0.1);text-align:center;padding:22px 40px;">
+  <tr><td style="${footerBgStyle}border-top:1px solid rgba(255,255,255,0.1);text-align:center;padding:22px 40px;">
     <p style="margin:0;color:rgba(255,255,255,0.9);font-size:14px;font-weight:600;">${data.footerText || 'Bring Innovation to Human Resource Management !!!'}</p>
   </td></tr>
 
