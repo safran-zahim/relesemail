@@ -5,7 +5,8 @@ import { generateEmailHTML } from './emailGenerator';
 import { generateWelcomeEmailHTML } from './welcomeGenerator';
 import type { FormData, FeatureCategory, CTAButton, WelcomeFormData } from './types';
 import { generateId } from './types';
-import WelcomeForm, { WELCOME_INITIAL } from './WelcomeForm';
+import WelcomeForm from './WelcomeForm';
+import { WELCOME_INITIAL } from './welcomeDefaults';
 import { featureIcons } from './icons';
 
 type TemplateType = 'release' | 'welcome';
@@ -164,7 +165,7 @@ export default function App() {
 
   const [activeSection, setActiveSection] = useState<string>('section-branding');
   const lastScrollSource = useRef<'form' | 'preview' | null>(null);
-  const scrollTimeout = useRef<any>(null);
+  const scrollTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const scrollToPreview = useCallback((sectionId: string) => {
     if (lastScrollSource.current === 'preview') return;
@@ -178,7 +179,9 @@ export default function App() {
       element.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
 
-    clearTimeout(scrollTimeout.current);
+    if (scrollTimeout.current !== null) {
+      clearTimeout(scrollTimeout.current);
+    }
     scrollTimeout.current = setTimeout(() => { lastScrollSource.current = null; }, 1000);
   }, []);
 
@@ -201,7 +204,9 @@ export default function App() {
         if (formElement) {
           formElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
-        clearTimeout(scrollTimeout.current);
+        if (scrollTimeout.current !== null) {
+          clearTimeout(scrollTimeout.current);
+        }
         scrollTimeout.current = setTimeout(() => { lastScrollSource.current = null; }, 1000);
       }
     };
@@ -248,7 +253,7 @@ export default function App() {
       const response = await fetch('/api/send-test-email', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: sendPayload.payload });
       if (!response.ok) throw new Error('Failed');
       setSendStatus('Sent!');
-    } catch (e) {
+    } catch {
       setSendStatus('Error');
     } finally {
       setSending(false);
