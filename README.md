@@ -12,17 +12,17 @@ A professional email generator for product releases and internal communications.
 
 ## Tech Stack
 
-- **Framework**: React 19
+- **Framework**: React 18
 - **Language**: TypeScript
-- **Bundler**: Vite 8
-- **Styling**: Tailwind CSS 4
+- **Bundler**: Vite
+- **Styling**: Tailwind CSS
 - **Icons**: Lucide React
 
 ## Getting Started
 
 ### Prerequisites
 
-- Node.js (v20 or higher)
+- Node.js (v18 or higher)
 - npm
 
 ### Installation
@@ -40,10 +40,6 @@ To start the development server:
 npm run dev
 ```
 The application will be available at `http://localhost:5173/`.
-
-### Email Sending in Docker
-
-The container can send email through SMTP, but the default `.env` in this workspace uses Ethereal, which is preview-only and does not deliver to real inboxes. To send actual mail from Docker, replace the `SMTP_*` values in `.env` with a real SMTP provider such as Gmail SMTP, Mailtrap, SendGrid, or another provider you control.
 
 ### Building for Production
 

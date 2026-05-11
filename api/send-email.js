@@ -1,8 +1,10 @@
-import nodemailer from 'nodemailer';
+import { google } from 'googleapis';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 
-export const config = { runtime: 'nodejs' };
+export const config = {
+  runtime: 'nodejs',
+};
 
 function getEnv(name) {
   const value = process.env[name];
@@ -10,15 +12,6 @@ function getEnv(name) {
     throw new Error(`Missing required environment variable: ${name}`);
   }
   return value;
-}
-
-function hasSmtpConfig() {
-  return Boolean(
-    process.env.SMTP_HOST
-    && process.env.SMTP_PORT
-    && process.env.SMTP_USER
-    && process.env.SMTP_PASS,
-  );
 }
 
 function base64UrlEncode(value) {
@@ -93,111 +86,10 @@ async function buildMimeMessage({ from, to, subject, htmlBody }) {
   return parts.join('\r\n');
 }
 
-async function prepareHtmlAndInlineLogo(htmlBody) {
-  const normalizedHtmlBody = htmlBody.replace(
-    /src=(['"])\/orangehrm-logo\.png\1/gi,
-    'src=$1cid:company-logo$1',
-  );
-
-  if (!normalizedHtmlBody.includes('cid:company-logo')) {
-    return { normalizedHtmlBody, attachments: [] };
-  }
-
-  const candidatePaths = [
-    path.join(process.cwd(), 'public', 'orangehrm-logo.png'),
-    path.join(process.cwd(), 'orangehrm-logo.png'),
-  ];
-
-  for (const logoPath of candidatePaths) {
-    try {
-      await readFile(logoPath);
-      return {
-        normalizedHtmlBody,
-        attachments: [{
-          filename: 'company-logo.png',
-          path: logoPath,
-          cid: 'company-logo',
-        }],
-      };
-    } catch {
-      // Try next candidate path.
-    }
-  }
-
-  return { normalizedHtmlBody, attachments: [] };
-}
-
-async function sendViaSmtp({ to, subject, htmlBody }) {
-  const host = getEnv('SMTP_HOST');
-  const port = Number.parseInt(getEnv('SMTP_PORT'), 10);
-  const secure = String(process.env.SMTP_SECURE || '').toLowerCase() === 'true';
-  const user = getEnv('SMTP_USER');
-  const pass = getEnv('SMTP_PASS');
-  const from = process.env.SMTP_FROM || user;
-  const { normalizedHtmlBody, attachments } = await prepareHtmlAndInlineLogo(htmlBody);
-
-  const transporter = nodemailer.createTransport({
-    host,
-    port,
-    secure,
-    auth: { user, pass },
-  });
-
-  await transporter.sendMail({
-    from,
-    to,
-    subject,
-    html: normalizedHtmlBody,
-    attachments,
-  });
-}
-
-async function sendViaGmailApi({ to, subject, htmlBody }) {
-  let google;
-  try {
-    ({ google } = await import('googleapis'));
-  } catch {
-    throw new Error('Google API transport unavailable. Configure SMTP_* variables or install googleapis.');
-  }
-
-  const clientId = getEnv('GMAIL_CLIENT_ID');
-  const clientSecret = getEnv('GMAIL_CLIENT_SECRET');
-  const refreshToken = getEnv('GMAIL_REFRESH_TOKEN');
-  const gmailUser = getEnv('GMAIL_USER');
-  const redirectUri = process.env.GMAIL_REDIRECT_URI || 'https://developers.google.com/oauthplayground';
-
-  const oauth2Client = new google.auth.OAuth2(clientId, clientSecret, redirectUri);
-  oauth2Client.setCredentials({ refresh_token: refreshToken });
-
-  const accessTokenResponse = await oauth2Client.getAccessToken();
-  const accessToken =
-    typeof accessTokenResponse === 'string'
-      ? accessTokenResponse
-      : accessTokenResponse?.token;
-
-  if (!accessToken) {
-    throw new Error('Could not obtain Gmail access token');
-  }
-
-  const rawMessage = await buildMimeMessage({
-    from: gmailUser,
-    to,
-    subject,
-    htmlBody,
-  });
-
-  const gmail = google.gmail({ version: 'v1', auth: oauth2Client });
-
-  await gmail.users.messages.send({
-    userId: 'me',
-    requestBody: {
-      raw: base64UrlEncode(rawMessage),
-    },
-  });
-}
-
 export default async function handler(req, res) {
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method Not Allowed' });
+  }
 
   if (req.headers['x-api-key'] !== process.env.MY_SECRET_KEY) {
     return res.status(401).json({ error: 'Unauthorized' });
@@ -210,11 +102,40 @@ export default async function handler(req, res) {
   }
 
   try {
-    if (hasSmtpConfig()) {
-      await sendViaSmtp({ to, subject, htmlBody });
-    } else {
-      await sendViaGmailApi({ to, subject, htmlBody });
+    const clientId = getEnv('GMAIL_CLIENT_ID');
+    const clientSecret = getEnv('GMAIL_CLIENT_SECRET');
+    const refreshToken = getEnv('GMAIL_REFRESH_TOKEN');
+    const gmailUser = getEnv('GMAIL_USER');
+    const redirectUri = process.env.GMAIL_REDIRECT_URI || 'https://developers.google.com/oauthplayground';
+
+    const oauth2Client = new google.auth.OAuth2(clientId, clientSecret, redirectUri);
+    oauth2Client.setCredentials({ refresh_token: refreshToken });
+
+    const accessTokenResponse = await oauth2Client.getAccessToken();
+    const accessToken =
+      typeof accessTokenResponse === 'string'
+        ? accessTokenResponse
+        : accessTokenResponse?.token;
+
+    if (!accessToken) {
+      throw new Error('Could not obtain Gmail access token');
     }
+
+    const rawMessage = await buildMimeMessage({
+      from: gmailUser,
+      to,
+      subject,
+      htmlBody,
+    });
+
+    const gmail = google.gmail({ version: 'v1', auth: oauth2Client });
+
+    await gmail.users.messages.send({
+      userId: 'me',
+      requestBody: {
+        raw: base64UrlEncode(rawMessage),
+      },
+    });
 
     return res.status(200).json({ success: true });
   } catch (error) {

@@ -197,9 +197,6 @@ Send a test email and verify client-specific rendering before production send.
 4. Send test fails:
 Check API endpoint availability and recipient email format.
 
-5. Docker reports success but no inbox mail arrives:
-The default test environment uses Ethereal SMTP. Ethereal is for preview/testing only, so it returns a preview link instead of delivering mail to a real inbox. Replace the `SMTP_*` values in `.env` with a real SMTP provider before using Docker for actual delivery.
-
 ## 10. Recommended OrangeHRM Writing Style
 
 1. Use clear and professional wording.
